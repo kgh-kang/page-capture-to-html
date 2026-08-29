@@ -1,0 +1,51 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>테스트 페이지</title>
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; color:#222; }
+  .box { padding:16px; border:1px solid #ccc; margin:8px; }
+  .hidden-none { display:none; }
+  .hidden-vis  { visibility:hidden; }
+  .hidden-op   { opacity:0; }
+  .faded-parent { opacity:0; }
+  .badge::before { content:"★ "; color:#e11; }
+  .tall { height: 2400px; background: linear-gradient(#fff,#eef); }
+  .scroller { height:80px; overflow:auto; border:1px solid #999; margin:8px; }
+  .scroller p { margin:0; height:40px; }
+  .overlay { position:fixed; top:0; left:0; width:220px; height:200px; background:#000; z-index:10; }
+  .under { position:fixed; top:20px; left:20px; background:#0f0; padding:20px; z-index:1; }
+  #anim { animation: spin 2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style></head><body>
+  <div class="box" id="visible-top">보이는 최상단 텍스트 — <a href="https://example.com/링크">바깥으로 나가는 링크</a></div>
+  <div class="box badge" id="pseudo">가상요소 있는 박스</div>
+  <!-- pointer-events:none 라벨이 '형제' 배경 위에 겹친 구조 (차트 주석·히어로 캡션 관용구) -->
+  <div id="pe-host" style="position:relative; height:44px; margin:8px 8px 8px 320px">
+    <div id="pe-bg" style="position:absolute; inset:0; background:#dde"></div>
+    <span id="pe-label" style="position:absolute; left:10px; top:12px; pointer-events:none; color:#c00">
+      클릭 안 받는 라벨 텍스트</span>
+  </div>
+  <!-- overflow:hidden 조상 밖으로 나간 절대배치 자식 (열린 드롭다운 관용구) -->
+  <div id="clip-host" style="overflow:hidden; height:34px; position:relative; margin:8px; background:#eee">
+    <div id="escapee" style="position:absolute; left:0; top:40px; width:300px; background:#efe">
+      클립 밖으로 나가 잘린 글</div>
+  </div>
+  <!-- overflow 조상이 static 이면 absolute 자손의 컨테이닝 블록이 아니라 클립되지 않는다 -->
+  <div id="clip2" style="overflow:hidden; height:30px; margin:8px; background:#eee">
+    <div id="escapee2" style="position:absolute; left:600px; top:560px; background:#ffe">
+      클립 조상이 static 이라 안 잘리는 글</div>
+  </div>
+  <div class="box hidden-none" id="d-none">display none — 완전히 사라져야 함</div>
+  <div class="box hidden-vis" id="d-vis">visibility hidden — 자리만 남아야 함</div>
+  <div class="box hidden-op" id="d-op">opacity 0 — 자리만</div>
+  <div class="faded-parent"><div class="box" id="child-of-faded">투명 부모의 자식 — 사라져야 함</div></div>
+  <div class="box" id="anim">애니메이션 박스</div>
+  <div class="scroller" id="sc"><p>1행</p><p>2행</p><p>3행 — 스크롤해서 보이는 행</p><p>4행</p><p>5행</p></div>
+  <input id="inp" value="입력된 값">
+  <div class="tall" id="tall">아주 긴 영역 (뷰포트 밖 대부분)</div>
+  <div class="box" id="way-below">한참 아래 — 뷰포트 밖이라 내용 사라져야 함</div>
+  <div class="under">가려진 요소</div>
+  <div class="overlay" id="ov">덮개</div>
+  <script>
+    document.getElementById('sc').scrollTop = 80;
+    document.getElementById('inp').value = '사용자가 타이핑한 값';
+  </script>
+</body></html>

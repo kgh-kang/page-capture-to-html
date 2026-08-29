@@ -1,0 +1,192 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Page Capture to HTML</title>
+<style>
+  /* Pretendard 라틴 서브셋(29KB). 한글은 시스템 폰트에 맡긴다 —
+     전체를 넣으면 2MB 라 확장 크기가 감당이 안 된다. */
+  @font-face {
+    font-family: Pretendard;
+    src: url('fonts/pretendard-latin.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: block;
+  }
+  :root {
+    color-scheme: light dark;
+    --sans: Pretendard, -apple-system, "Apple SD Gothic Neo", system-ui, "Malgun Gothic", sans-serif;
+    --bg: #fff; --fg: #16181d; --dim: #5f6673; --line: #e3e5e9;
+    /* --accent 는 테두리·배지용, --accent-btn 은 흰 글씨를 얹는 버튼용.
+       같은 값을 쓰면 버튼 대비(4.5:1)나 테두리 선명함 중 하나가 깨진다. */
+    --accent: #ea580c; --accent-btn: #c2410c; --accent-soft: #fff4ec; --off: #8a909b;
+    --ok-bg: #edf7ee; --ok-fg: #1c7a2e; --warn-bg: #fdf1ee; --warn-fg: #b3401d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1f24; --fg: #e8eaed; --dim: #9aa0aa; --line: #33373e;
+      --accent: #fb923c; --accent-btn: #c2410c; --accent-soft: #33220f; --off: #5a6069;
+      --knob: #b9bfc8;
+      --ok-bg: #1d2b21; --ok-fg: #6ed17f; --warn-bg: #33221d; --warn-fg: #ef9878;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 316px; margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font: 13px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  header { padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; letter-spacing: -.01em; }
+  .brand img { flex: none; border-radius: 4px; }
+  .page { margin-top: 7px; font-size: 12px; color: var(--fg);
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { margin-top: 2px; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  section { padding: 13px 15px; }
+  .heading { font-size: 11px; font-weight: 600; color: var(--dim); margin-bottom: 8px; }
+
+  .choice { display: block; border: 1.5px solid var(--line); border-radius: 9px;
+            padding: 9px 11px; cursor: pointer; margin-bottom: 6px; }
+  .choice:last-child { margin-bottom: 0; }
+  .choice.on { border-color: var(--accent); background: var(--accent-soft); }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice b { display: block; font-size: 12.5px; font-weight: 600; }
+  .choice span { display: block; font-size: 11px; color: var(--dim); margin-top: 1px; line-height: 1.4; }
+
+  .go { display: block; width: 100%; padding: 11px; font: inherit; font-weight: 700; font-size: 13px;
+        border: 0; border-radius: 9px; background: var(--accent-btn); color: #fff; cursor: pointer; }
+  .go:disabled { opacity: .5; cursor: default; }
+  .go .hint { font-weight: 500; font-size: 11px; margin-left: 5px; opacity: .85; }
+  .spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px;
+             border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%;
+             animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  details { border-top: 1px solid var(--line); }
+  summary { padding: 11px 15px; font-size: 12px; color: var(--dim); cursor: pointer; list-style: none;
+            display: flex; align-items: center; gap: 5px; user-select: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary .arrow { transition: transform .15s; }
+  details[open] summary .arrow { transform: rotate(90deg); }
+  .opts { padding: 0 15px 13px; }
+
+  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; cursor: pointer; }
+  .opt + .opt { border-top: 1px solid var(--line); }
+  .opt .txt { flex: 1; min-width: 0; }
+  .opt b { display: block; font-size: 12.5px; font-weight: 500; }
+  .opt span { display: block; font-size: 11px; color: var(--dim); margin-top: 1px; line-height: 1.4; }
+  .opt.muted { opacity: .45; }
+  .opt.muted .sw input { cursor: default; }
+  .sw { position: relative; width: 34px; height: 20px; flex: none; margin-top: 2px; }
+  .sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .sw i { position: absolute; inset: 0; border-radius: 999px; background: var(--off);
+          transition: background .15s; pointer-events: none; }
+  .sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+                 border-radius: 50%; background: var(--knob, #fff); transition: transform .15s;
+                 box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .sw input:checked + i::after { background: #fff; }
+  .sw input:checked + i { background: var(--accent); }
+  .sw input:checked + i::after { transform: translateX(14px); }
+
+  .notice { margin: 0 15px 13px; border: 1.5px solid var(--accent); background: var(--accent-soft);
+            border-radius: 9px; padding: 10px 11px; }
+  .notice b { display: block; font-size: 12.5px; font-weight: 600; }
+  .notice p { margin: 2px 0 8px; font-size: 11px; color: var(--dim); line-height: 1.4; }
+  .notice .opt { padding: 0; border: 0; }
+  .notice .opt b { font-size: 12px; }
+  [hidden] { display: none !important; }
+
+  #result { padding: 0 15px 14px; }
+  .card { border-radius: 9px; padding: 10px 12px; font-size: 12px; }
+  .card.ok { background: var(--ok-bg); color: var(--ok-fg); }
+  .card.err { background: var(--warn-bg); color: var(--warn-fg); }
+  .card b { display: block; font-size: 12.5px; margin-bottom: 3px; }
+  .card .file { color: var(--fg); font-size: 11px; word-break: break-all; opacity: .85; }
+  .card .stats { color: var(--fg); font-size: 11px; opacity: .7; margin-top: 5px; line-height: 1.5;
+                 font-variant-numeric: tabular-nums; }
+</style>
+
+<header>
+  <div class="brand">
+    <img src="icons/icon32.png" width="16" height="16" alt="" aria-hidden="true">
+    Page Capture to HTML
+  </div>
+  <div class="page" id="pageTitle">페이지를 확인하는 중…</div>
+  <div class="meta" id="pageMeta"></div>
+</header>
+
+<div class="notice" id="notice" hidden>
+  <b>화면을 가린 안내창이 있어요</b>
+  <p>지금 그대로 저장하면 창에 덮인 부분은 빈칸이 돼요.</p>
+  <label class="opt">
+    <span class="sw"><input type="checkbox" id="dropOverlay2"><i></i></span>
+    <span class="txt"><b>안내창 걷어내고 그 아래 저장하기</b></span>
+  </label>
+</div>
+
+<section>
+  <div class="heading">어떻게 저장할까요?</div>
+  <label class="choice" id="c-crop">
+    <input type="radio" name="mode" value="crop">
+    <b>지금 화면만</b>
+    <span>파일을 열면 지금 보이는 이 화면이 그대로 나와요</span>
+  </label>
+  <label class="choice" id="c-full">
+    <input type="radio" name="mode" value="full">
+    <b>페이지 전체</b>
+    <span>위아래 전체를 남기되, 화면 밖에 있던 내용은 비워요</span>
+  </label>
+</section>
+
+<section style="padding-top:0">
+  <button class="go" id="go">화면 저장<span class="hint" id="shortcut"></span></button>
+</section>
+
+<div id="result"></div>
+
+<details id="adv">
+  <summary><span class="arrow">›</span> 자세한 설정</summary>
+  <div class="opts">
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="freeze"><i></i></span>
+      <span class="txt"><b>아무것도 안 눌리게 굳히기</b>
+        <span>링크·버튼·입력칸을 전부 끊고 자동 실행 코드도 빼요.
+              눌러도 아무 일 없는 읽기 전용 파일이 돼요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="dropOverlay"><i></i></span>
+      <span class="txt"><b>덮은 안내창 치우기</b>
+        <span>화면을 가린 팝업·배너를 걷어내고 그 아래 내용을 저장해요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="occlusion"><i></i></span>
+      <span class="txt"><b>가려진 글자 빼기</b>
+        <span>팝업이나 배너에 덮여 안 보이던 내용까지 지워요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="images"><i></i></span>
+      <span class="txt"><b>사진 넣기</b>
+        <span>끄면 파일이 훨씬 가벼워지는 대신 그림이 빈칸이 돼요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="fonts"><i></i></span>
+      <span class="txt"><b>글꼴 넣기</b>
+        <span>끄면 글자 모양과 줄바꿈이 조금 달라질 수 있어요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="frames"><i></i></span>
+      <span class="txt"><b>안쪽 화면도 저장</b>
+        <span>네이버 블로그처럼 본문을 따로 불러오는 페이지에 필요해요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="restoreScroll"><i></i></span>
+      <span class="txt"><b>열 때 보던 위치로</b>
+        <span>끄면 저장 파일에 자동 실행 코드가 하나도 안 들어가요</span></span>
+    </label>
+    <label class="opt">
+      <span class="sw"><input type="checkbox" id="pin"><i></i></span>
+      <span class="txt"><b>크기 그대로 고정</b>
+        <span>표·사진을 원본 크기로 못박아요. 끄면 배치가 틀어질 수 있어요</span></span>
+    </label>
+  </div>
+</details>
+
+<script src="popup.js"></script>
