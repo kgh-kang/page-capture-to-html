@@ -49,6 +49,14 @@ await send('Page.enable');
 await sleep(4000);
 if (scrollY) { await evaluate(`window.scrollTo(0, ${scrollY})`, false); await sleep(1200); }
 
+// 해상도는 deviceScaleFactor 로 올린다. clip 은 문서 좌표라
+// 스크롤이 복원된 저장본에서는 엉뚱한 영역을 잘라낸다.
+const SCALE = Number(process.env.SHOT_SCALE || 1);
+if (SCALE !== 1) {
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 800, deviceScaleFactor: SCALE, mobile: false });
+  await sleep(500);
+}
 const before = await send('Page.captureScreenshot', { format: 'png' });
 writeFileSync(resolve(here, `${tagName}-original.png`), Buffer.from(before.result.data, 'base64'));
 

@@ -33,27 +33,27 @@ const font = readFileSync(resolve(ROOT, 'fonts/pretendard-latin.woff2')).toStrin
 
 const LANG = (process.argv[2] || 'ko');
 const T = LANG === 'en' ? {
-  s1: ['What you see is what you get', 'The saved file opens to exactly the screen you captured'],
-  s2: ['Only the visible part', 'Off-screen content, collapsed menus and covered text are left out'],
-  s3: ['Take the dialog away', 'Remove the pop-up and save what was underneath'],
-  s4: ['One file. Nothing else.', 'Images and fonts are embedded, so it works offline'],
-  s5: ['Two choices, then save', 'Everything else stays out of your way'],
+  s1: ['The screen you saw, saved', 'Open the file and it is exactly what you were looking at'],
+  s2: ['Clear what covers the page', 'The dialog is taken away and what was underneath is saved'],
+  s3: ['Text stays text', 'Select it, copy it, search it — a screenshot cannot do that'],
+  s4: ['Pick one, then save', 'Everything else stays out of your way'],
+  s5: ['One file, nothing else', 'Images and web fonts are inside, so it opens without internet'],
   before: 'Original page', after: 'Saved file', tile: 'Saves only what you see',
-  chips1: ['0.31 MB', 'images and fonts embedded', 'opens without internet'],
-  chips2: ['off-screen rows left out', 'no scripts', 'text stays selectable'],
-  chips3: ['dialog removed', 'the chart underneath is kept'],
-  chips4: ['one file', 'nothing else to carry'],
+  c1: ['0.31 MB', 'one HTML file', 'no scripts'],
+  c2: ['dialog removed', 'the chart underneath is kept'],
+  c3: ['tables keep their columns', 'links stay clickable'],
+  c5: ['images embedded', 'web fonts embedded', 'works offline'],
 } : {
-  s1: ['보이는 그대로 저장', '파일을 열면 캡처한 그 화면이 그대로 나옵니다'],
-  s2: ['화면에 있던 것만', '스크롤 밖 내용, 접힌 메뉴, 가려진 글자는 담기지 않습니다'],
-  s3: ['가린 창을 걷어내고', '팝업을 치우고 그 아래 있던 내용을 저장합니다'],
-  s4: ['파일 하나로 끝', '이미지와 글꼴까지 담겨서 인터넷 없이도 열립니다'],
-  s5: ['둘 중 하나 고르고 저장', '나머지는 알아서 합니다'],
+  s1: ['보던 화면을 그대로', '파일을 열면 캡처한 그 순간이 그대로 나옵니다'],
+  s2: ['가린 창은 걷어내고', '화면을 덮은 안내창을 치우고 그 아래를 저장합니다'],
+  s3: ['글자는 글자로 남습니다', '그대로 선택하고 복사하고 검색합니다. 스크린샷은 못 하는 일입니다'],
+  s4: ['하나 고르고 저장', '나머지는 알아서 합니다'],
+  s5: ['파일 하나면 끝', '이미지도 글꼴도 안에 들어 있어 인터넷 없이 열립니다'],
   before: '원래 페이지', after: '저장한 파일', tile: '보이는 것만 저장합니다',
-  chips1: ['0.31 MB', '이미지·글꼴 포함', '인터넷 없이 열림'],
-  chips2: ['화면 밖 항목 제외', '스크립트 없음', '글자 복사 가능'],
-  chips3: ['안내창 제거', '아래 차트까지 그대로'],
-  chips4: ['파일 하나', '따로 챙길 것 없음'],
+  c1: ['0.31 MB', 'HTML 파일 하나', '스크립트 없음'],
+  c2: ['안내창 제거', '아래 차트까지 그대로'],
+  c3: ['표는 열이 유지되고', '링크도 눌립니다'],
+  c5: ['이미지 포함', '웹폰트 포함', '인터넷 없이 열림'],
 };
 
 const CSS = `
@@ -64,11 +64,11 @@ const CSS = `
     -webkit-font-smoothing:antialiased;background:#fff;color:#16181d}
   .shot{width:1280px;height:800px;display:flex;flex-direction:column;
     background:linear-gradient(170deg,#fff7f2 0%,#ffe9dc 100%)}
-  .head{padding:46px 64px 0;flex:none}
-  h1{font-size:44px;line-height:1.15;letter-spacing:-.03em;font-weight:800}
-  p.sub{margin-top:11px;font-size:19px;color:#6b5a52;letter-spacing:-.01em}
+  .head{padding:44px 68px 0;flex:none}
+  h1{font-size:46px;line-height:1.12;letter-spacing:-.032em;font-weight:800}
+  p.sub{margin-top:12px;font-size:19.5px;color:#7a655b;letter-spacing:-.01em}
   .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-    gap:22px;padding:26px 52px 20px}
+    gap:20px;padding:22px 68px 16px}
   .chips{flex:none;display:flex;gap:9px;justify-content:center;padding:0 64px 40px}
   .chips span{background:#fff;color:#a34a12;font-size:14.5px;font-weight:600;
     padding:8px 16px;border-radius:999px;box-shadow:0 2px 8px rgba(120,60,20,.10)}
@@ -107,29 +107,33 @@ function win(src, w, caption, h) {
 }
 
 const PAGES = {
-  '01-same': `<div class="shot"><div class="head"><h1>${T.s1[0]}</h1><p class="sub">${T.s1[1]}</p></div>
-    <div class="stage">${win(img('test/wiki-original.png'), 556, T.before, 404)}
-    <div class="arrow">→</div>${win(img('test/wiki-capture.png'), 556, T.after, 404)}</div>
-    ${chips(T.chips1)}</div>`,
+  // 1. 핵심 가치 — 저장된 결과를 크게 하나만 보여준다
+  '01-saved': `<div class="shot"><div class="head"><h1>${T.s1[0]}</h1><p class="sub">${T.s1[1]}</p></div>
+    <div class="stage">${win(img('test/wiki-capture.png'), 1144, '', 452)}</div>
+    ${chips(T.c1)}</div>`,
 
-  '02-visible': `<div class="shot"><div class="head"><h1>${T.s2[0]}</h1><p class="sub">${T.s2[1]}</p></div>
-    <div class="stage">${win(img('test/hn-capture.png'), 1010, '', 466)}</div>
-    ${chips(T.chips2)}</div>`,
+  // 2. 유일하게 before/after 가 의미 있는 장면 — 차이가 확연하다
+  '02-overlay': `<div class="shot"><div class="head"><h1>${T.s2[0]}</h1><p class="sub">${T.s2[1]}</p></div>
+    <div class="stage">${win(img('test/fin-original.png'), 552, T.before, 396)}
+    <div class="arrow">→</div>${win(img('test/finx-capture.png'), 552, T.after, 396)}</div>
+    ${chips(T.c2)}</div>`,
 
-  '03-overlay': `<div class="shot"><div class="head"><h1>${T.s3[0]}</h1><p class="sub">${T.s3[1]}</p></div>
-    <div class="stage">${win(img('test/fin-original.png'), 556, T.before, 404)}
-    <div class="arrow">→</div>${win(img('test/finx-capture.png'), 556, T.after, 404)}</div>
-    ${chips(T.chips3)}</div>`,
+  // 3. 스크린샷과의 차이 — 복잡한 표가 열까지 그대로 살아 있다
+  '03-text': `<div class="shot"><div class="head"><h1>${T.s3[0]}</h1><p class="sub">${T.s3[1]}</p></div>
+    <div class="stage">${win(img('test/hn-capture.png'), 1144, '', 452)}</div>
+    ${chips(T.c3)}</div>`,
 
-  '04-single': `<div class="shot"><div class="head"><h1>${T.s4[0]}</h1><p class="sub">${T.s4[1]}</p></div>
-    <div class="stage">${win(img('test/wiki-capture.png'), 1010, '', 466)}</div>
-    ${chips(T.chips4)}</div>`,
-
-  '05-popup': `<div class="shot"><div class="head"><h1>${T.s5[0]}</h1><p class="sub">${T.s5[1]}</p></div>
-    <div class="stage" style="gap:46px;align-items:flex-start;padding-top:18px">
-      <img class="popup" src="${img('test/ui-' + LANG + '-light-idle.png')}" style="width:334px">
-      <img class="popup" src="${img('test/ui-' + LANG + '-light-done.png')}" style="width:334px">
+  // 4. 사용법
+  '04-popup': `<div class="shot"><div class="head"><h1>${T.s4[0]}</h1><p class="sub">${T.s4[1]}</p></div>
+    <div class="stage" style="gap:52px;align-items:flex-start;padding-top:14px">
+      <img class="popup" src="${img('test/ui-' + LANG + '-light-idle.png')}" style="width:346px">
+      <img class="popup" src="${img('test/ui-' + LANG + '-light-done.png')}" style="width:346px">
     </div></div>`,
+
+  // 5. 단일 파일
+  '05-single': `<div class="shot"><div class="head"><h1>${T.s5[0]}</h1><p class="sub">${T.s5[1]}</p></div>
+    <div class="stage">${win(img('test/finx-capture.png'), 1144, '', 452)}</div>
+    ${chips(T.c5)}</div>`,
 
   'tile': `<div class="tile"><img src="${img('icons/icon128.png')}">
     <b>Capture to HTML</b><span>${T.tile}</span></div>`,
