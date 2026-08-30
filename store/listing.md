@@ -187,11 +187,32 @@ scripts.
 - 신용도 판단이나 대출 목적으로 사용하거나 이전하지 않습니다
 
 개인정보처리방침 URL:
-```
-https://github.com/kgh-kang/page-capture-to-html/blob/main/PRIVACY.md
+
+수집 항목을 전부 해제하면 **선택 사항**이라 비워도 된다. 일단 비우고 제출해 보고,
+심사에서 요구하면 그때 붙이면 된다 — 저장소는 private 이므로 GitHub 주소를 그대로 쓰면
+404 다. 공개가 필요해지면:
+
+```bash
+gh gist create PRIVACY.md --public    # 여기서 나온 주소를 입력
 ```
 
 ---
+
+## 제출용 이미지
+
+`dist/store/` 에 있다. `node store/shots/build.mjs ko` / `... en` 으로 다시 만든다.
+
+| 파일 | 규격 | 용도 |
+|---|---|---|
+| `{ko,en}-01-same.png` | 1280×800 | 원본과 저장본이 같다 |
+| `{ko,en}-02-visible.png` | 1280×800 | 보이는 것만 담긴다 |
+| `{ko,en}-03-overlay.png` | 1280×800 | 덮은 창을 걷어낸다 |
+| `{ko,en}-04-single.png` | 1280×800 | 파일 하나로 끝 |
+| `{ko,en}-05-popup.png` | 1280×800 | 팝업 화면 |
+| `{ko,en}-tile.png` | 440×280 | 소형 프로모 타일 |
+
+스크린샷은 최소 1장·최대 5장이므로 다섯 장을 그대로 올리면 된다.
+언어별로 다른 이미지를 올릴 수 있으니 한국어 항목에는 `ko-`, 영어에는 `en-` 을 쓴다.
 
 ## 기타
 
