@@ -37,13 +37,13 @@
 
   /* 제품 아이콘과 같은 브래킷 모티프. 아이콘이 HTML 글자를 감싸듯 창을 감싼다 */
   .brk{position:absolute;border:6px solid var(--accent1);width:58px;height:58px;z-index:5}
-  .brk.tl{left:74px;top:216px;border-right:0;border-bottom:0}
-  .brk.tr{right:74px;top:216px;border-left:0;border-bottom:0}
+  .brk.tl{left:74px;top:186px;border-right:0;border-bottom:0}
+  .brk.tr{right:74px;top:186px;border-left:0;border-bottom:0}
   .brk.bl{left:74px;bottom:26px;border-right:0;border-top:0}
   .brk.br{right:74px;bottom:26px;border-left:0;border-top:0}
 
   /* 브라우저 창 목업 */
-  .win{position:absolute;left:88px;top:230px;right:88px;bottom:40px;
+  .win{position:absolute;left:88px;top:200px;right:88px;bottom:40px;
     background:#fff;border-radius:12px;overflow:hidden;
     box-shadow:0 26px 70px rgba(0,0,0,.28)}
   .chrome{background:#3b3f45;padding:9px 12px 0}
@@ -64,7 +64,7 @@
   .viewport iframe{width:100%;height:100%;border:0;display:block}
   /* 확장 아이콘을 눌러 팝업이 열린 순간. 창(.win) 은 overflow:hidden 이라
      팝업이 창 아래로 넘칠 수 있게 시트 기준으로 둔다 — 실제 크롬 팝업도 창 밖으로 나간다. */
-  .ext{position:absolute;right:102px;top:273px;z-index:6;cursor:pointer}
+  .ext{position:absolute;right:102px;top:243px;z-index:6;cursor:pointer}
   .ext.off{display:none}
   .ext-btn{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.14);
     display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)}
@@ -92,9 +92,6 @@
   p.sub{margin-top:10px;font-size:19px;line-height:1.45;color:#5f6673;letter-spacing:-.012em}
   p.sub.light{color:rgba(255,255,255,.9)}
   [contenteditable]:focus{outline:2px solid #ffb27a;outline-offset:3px;border-radius:3px}
-  .chips{display:flex;gap:8px;margin-top:18px}
-  .chips span{background:#fff;color:#a34a12;font-size:13.5px;font-weight:600;line-height:1.3;
-    padding:7px 14px;border-radius:999px;box-shadow:0 2px 9px rgba(0,0,0,.10)}
 </style>
 
 <div class="guide">
@@ -119,6 +116,7 @@
     <button onclick="document.querySelectorAll('.mark').forEach(m=>m.classList.toggle('off'))">강조 켜기/끄기</button>
     <button onclick="document.querySelectorAll('.brk').forEach(m=>m.style.display=m.style.display==='none'?'':'none')">모서리 장식 켜기/끄기</button>
     <button onclick="document.querySelectorAll('.ext').forEach(m=>m.classList.toggle('off'))">확장 팝업 켜기/끄기</button>
+    <button onclick="saveAll()"><b>전체 PNG 저장</b></button>
     <button onclick="document.querySelector('.guide').style.display='none'">안내 숨기기</button>
   </div>
 </div>
@@ -129,35 +127,35 @@
 const SHEETS = [
   { n:'01', title:'보던 화면을 그대로', sub:'파일을 열면 캡처한 그 순간이 그대로 나옵니다',
     tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
-    chips:['HTML 파일 하나','스크립트 없음','인터넷 없이 열림'], mark:null },
+    mark:null },
   { n:'02', title:'가린 창은 걷어내고', sub:'화면을 덮은 안내창을 치우고 그 아래를 저장합니다',
     tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
-    chips:['안내창 제거','아래 내용까지 그대로'], mark:{x:120,y:90,w:520,h:300} },
+    mark:{x:120,y:90,w:520,h:300} },
   { n:'03', title:'글자는 글자로 남습니다', sub:'그대로 선택하고 복사하고 검색합니다. 스크린샷은 못 하는 일입니다',
     tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
-    chips:['표는 열이 유지되고','링크도 눌립니다'], mark:{x:150,y:150,w:600,h:120} },
+    mark:{x:150,y:150,w:600,h:120} },
   { n:'04', title:'하나 고르고 저장', sub:'나머지는 알아서 합니다',
     tab:'HTML - 위키백과', url:'https://ko.wikipedia.org/wiki/HTML',
-    chips:[], mark:null, pop:'idle' },
+    mark:null, pop:'idle' },
   { n:'05', title:'파일 하나면 끝', sub:'이미지도 글꼴도 안에 들어 있어 인터넷 없이 열립니다',
     tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
-    chips:['이미지 포함','웹폰트 포함','0.3 MB'], mark:null },
+    mark:null },
 
   { n:'E1', lang:'en', title:'The screen, exactly as it was', sub:'Open the file and the moment you captured is still there',
     tab:'HTML - Wikipedia', url:'https://en.wikipedia.org/wiki/HTML',
-    chips:['One HTML file','No scripts','Opens offline'], mark:null },
+    mark:null },
   { n:'E2', lang:'en', title:'Clear what covers it', sub:'Take the dialog away and save what was underneath',
     tab:'HTML - Wikipedia', url:'https://en.wikipedia.org/wiki/HTML',
-    chips:['Dialog removed','Everything beneath, intact'], mark:{x:120,y:90,w:520,h:300} },
+    mark:{x:120,y:90,w:520,h:300} },
   { n:'E3', lang:'en', title:'Text stays text', sub:'Select it, copy it, search it. A screenshot cannot do that',
     tab:'HTML - Wikipedia', url:'https://en.wikipedia.org/wiki/HTML',
-    chips:['Columns hold','Links still work'], mark:{x:150,y:150,w:600,h:120} },
+    mark:{x:150,y:150,w:600,h:120} },
   { n:'E4', lang:'en', title:'Pick one, press save', sub:'The rest is handled for you',
     tab:'HTML - Wikipedia', url:'https://en.wikipedia.org/wiki/HTML',
-    chips:[], mark:null, pop:'idle' },
+    mark:null, pop:'idle' },
   { n:'E5', lang:'en', title:'One file, nothing else', sub:'Images and web fonts are inside, so it opens without internet',
     tab:'HTML - Wikipedia', url:'https://en.wikipedia.org/wiki/HTML',
-    chips:['Images embedded','Web fonts embedded','0.3 MB'], mark:null },
+    mark:null },
 ];
 
 // 팝업 UI 는 test/uishot.mjs 가 popup.html 을 실제로 렌더해 찍은 것이다(2배 해상도).
@@ -169,11 +167,11 @@ const POPUP = {
 const ICON = 'data:image/png;base64,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';
 
 document.getElementById('sheets').innerHTML = SHEETS.map((s, i) => `
-<div class="sheet" id="sheet${s.n}" data-lang="${s.lang || 'ko'}">
+<div class="sheet" id="sheet${s.n}" data-lang="${s.lang || 'ko'}" data-n="${s.n}">
   <span class="num">${s.n} · 1280×800 · ${s.lang === 'en' ? 'English' : '한국어'}
     <button class="save" onclick="savePng(this.closest('.sheet'), '${s.n}')">PNG 저장</button></span>
   <div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
-  <div class="copy"><h2 contenteditable>${s.title}</h2><p class="sub" contenteditable>${s.sub}</p>${s.chips.length ? `<div class="chips">${s.chips.map(c=>`<span contenteditable>${c}</span>`).join('')}</div>` : ''}</div>
+  <div class="copy"><h2 contenteditable>${s.title}</h2><p class="sub" contenteditable>${s.sub}</p></div>
   <div class="win">
     <div class="chrome">
       <div class="tabs">
@@ -256,9 +254,9 @@ async function sheetToPng(sheet) {
     c.toBlob((b) => (b ? res(b) : rej(new Error('캔버스가 비었습니다'))), 'image/png'));
 }
 
-async function savePng(sheet, name) {
+async function savePng(sheet, name, quiet) {
   const btn = sheet.querySelector('.save');
-  if (sheet.querySelector('.viewport iframe') && !confirm(
+  if (!quiet && sheet.querySelector('.viewport iframe') && !confirm(
       '이 시트는 창 안에 사이트를 iframe 으로 띄우고 있습니다.\n' +
       'iframe 은 그림으로 옮겨지지 않아 그 부분이 빈 채로 저장됩니다.\n\n' +
       '사이트 화면까지 담으려면 개발자도구에서 .sheet 를 고르고\n' +
@@ -274,6 +272,18 @@ async function savePng(sheet, name) {
     alert('저장하지 못했습니다 — ' + e.message);
   } finally {
     btn.disabled = false;
+  }
+}
+
+async function saveAll() {
+  const sheets = [...document.querySelectorAll('.sheet')];
+  const framed = sheets.filter((x) => x.querySelector('.viewport iframe')).length;
+  if (framed && !confirm(
+      `${framed}장은 창에 사이트를 iframe 으로 띄우고 있어 그 부분이 빈 채로 저장됩니다.\n` +
+      '그 장들은 개발자도구의 Capture node screenshot 을 쓰세요.\n\n계속할까요?')) return;
+  for (const sheet of sheets) {
+    await savePng(sheet, sheet.dataset.n, true);
+    await new Promise((r) => setTimeout(r, 400));   // 연달아 내려받으면 크롬이 뒤엣것을 버린다
   }
 }
 
