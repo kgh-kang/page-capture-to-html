@@ -1,25 +1,22 @@
 #!/usr/bin/env bash
 # 웹스토어에 올릴 zip 을 만든다. 확장이 실제로 쓰는 파일만 담는다
-# (test/·scripts/·assets/ 는 개발용이라 제외).
+# (tools/·store/ 는 개발용이라 제외).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-version=$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")
+version=$(python3 -c "import json;print(json.load(open('src/manifest.json'))['version'])")
 out="out/pkg/capture-to-html-${version}.zip"
 
 mkdir -p out/pkg
 rm -f "$out"
-zip -qr "$out" \
-  manifest.json background.js content.js popup.html popup.js \
-  icons _locales fonts/pretendard-latin.woff2 \
-  -x '*.DS_Store'
+(cd src && zip -qr "../$out" . -x '*.DS_Store')
 
 # 매니페스트가 참조하는 파일이 실제로 담겼는지 확인한다
 python3 - "$out" <<'PY'
 import json, sys, zipfile
 z = zipfile.ZipFile(sys.argv[1])
 have = set(z.namelist())
-m = json.load(open('manifest.json'))
+m = json.load(open('src/manifest.json'))
 need = ['manifest.json', 'background.js', m['action']['default_popup']]
 need += list(m['icons'].values()) + list(m['action']['default_icon'].values())
 need += ['_locales/%s/messages.json' % l for l in ('ko', 'en')]

@@ -8,7 +8,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9333;
 const here = new URL('.', import.meta.url).pathname;
 const pageUrl = 'file://' + resolve(here, 'page.html');
-const contentJs = readFileSync(resolve(here, '..', 'content.js'), 'utf8');
+const contentJs = readFileSync(resolve(here, '..', 'src', 'content.js'), 'utf8');
 const OUT = resolve(here, '..', 'out', 'test');
 mkdirSync(OUT, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-'));

@@ -11,7 +11,7 @@ const here = new URL('.', import.meta.url).pathname;
 const url = process.argv[2];
 const tagName = process.argv[3] || 'live';
 const scrollY = Number(process.argv[4] || 0);
-const contentJs = readFileSync(resolve(here, '..', 'content.js'), 'utf8');
+const contentJs = readFileSync(resolve(here, '..', 'src', 'content.js'), 'utf8');
 const OUT = resolve(here, '..', 'out', 'test');
 mkdirSync(OUT, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-live-'));

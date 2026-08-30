@@ -28,7 +28,7 @@ const send = (m, p = {}) => { const i = ++id; ws.send(JSON.stringify({ id: i, me
 const evaluate = async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true })).result.result.value;
 
 await send('Page.enable');
-const popup = 'file://' + resolve(here, '..', 'popup.html');
+const popup = 'file://' + resolve(here, '..', 'src', 'popup.html');
 
 const LANGS = (process.argv[2] || 'ko').split(',');
 for (const lang of LANGS) {

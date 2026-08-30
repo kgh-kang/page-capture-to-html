@@ -9,7 +9,7 @@
 그 안에 든 글자가 무엇을 잡아내는지 말한다.
 크기마다 다르게 그린다 — 32px 아래에서는 네 글자가 뭉개지므로 H 한 글자로 바꾼다.
 
-글자는 획으로 흉내내지 않고 Pretendard Bold 를 렌더한 마스크(assets/mask-*.png)를 쓴다.
+글자는 획으로 흉내내지 않고 Pretendard Bold 를 렌더한 마스크(tools/masks/mask-*.png)를 쓴다.
 마스크는 test/render_text.mjs 로 다시 뽑을 수 있다.
 
 사용법:  python3 scripts/make_icons.py [색] [출력폴더]
@@ -108,8 +108,8 @@ def _read_png_alpha(path):
 
 def _mask(name):
     if name not in _MASKS:
-        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        _MASKS[name] = _read_png_alpha(os.path.join(here, 'assets', name + '.png'))
+        here = os.path.dirname(os.path.abspath(__file__))
+        _MASKS[name] = _read_png_alpha(os.path.join(here, 'masks', name + '.png'))
     return _MASKS[name]
 
 def _mask_at(name, gx, gy, cx, cy, height):

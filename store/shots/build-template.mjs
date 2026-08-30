@@ -24,7 +24,7 @@ const run = (what, args) => {
 
 // 팝업 UI 는 popup.html 을 실제로 렌더해 찍은 것이라 언제든 다시 만들 수 있다
 const POPUP_FILES = ['ko', 'en'].flatMap((l) => ['idle', 'done'].map((s) => `out/ui/ui-${l}-light-${s}.png`));
-if (POPUP_FILES.some((f) => !existsSync(resolve(ROOT, f)))) run('팝업 UI 캡처', ['test/uishot.mjs', 'ko,en']);
+if (POPUP_FILES.some((f) => !existsSync(resolve(ROOT, f)))) run('팝업 UI 캡처', ['tools/uishot.mjs', 'ko,en']);
 
 // 창 안에 들어갈 사이트 화면. 없으면 기본값(위키백과)으로 받아온다
 const SCREEN_FILES = ['ko', 'en'].map((l) => `store/shots/screens/${l}.png`);
@@ -36,7 +36,7 @@ const shot = Object.fromEntries(['ko', 'en'].map((l) =>
   [l, `data:image/png;base64,${b64(resolve(ROOT, `store/shots/screens/${l}.png`))}`]));
 
 const html = readFileSync(SRC, 'utf8')
-  .replace('@FONT@', `data:font/woff2;base64,${b64(resolve(ROOT, 'fonts/pretendard-kr.woff2'))}`)
+  .replace('@FONT@', `data:font/woff2;base64,${b64(resolve(here, 'pretendard-kr.woff2'))}`)
   .replace('@POPUP@', JSON.stringify(popup))
   .replace('@SHOT@', JSON.stringify(shot));
 

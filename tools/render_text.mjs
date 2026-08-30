@@ -69,7 +69,7 @@ for (const job of JOBS) {
     clip: { x: box.x, y: box.y, width: Math.ceil(box.w), height: Math.ceil(box.h), scale: 1 },
     captureBeyondViewport: true,
   });
-  writeFileSync(resolve(here, '..', 'out', 'masks', job.out), Buffer.from(r.result.data, 'base64'));
+  writeFileSync(resolve(here, 'masks', job.out), Buffer.from(r.result.data, 'base64'));
   console.log(job.out, Math.round(box.w) + 'x' + Math.round(box.h));
 }
 ws.close(); chrome.kill(); process.exit(0);

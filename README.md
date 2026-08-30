@@ -41,7 +41,7 @@ Chrome Web Store 를 거치지 않고 로컬에서 바로 쓴다.
 확장 밖에서 `popup.html` 을 직접 열었을 때는 `messages.json` 을 직접 읽어 미리보기가 된다.
 
 ```bash
-node test/uishot.mjs ko,en     # 두 언어 × 라이트·다크로 촬영
+node tools/uishot.mjs ko,en     # 두 언어 × 라이트·다크로 촬영
 ```
 
 ## 동작 방식
@@ -125,7 +125,7 @@ padding 을 더하면 요소가 그만큼 부푼다.
 **계산값은 반올림된 값이다.** 부모와 자식에 동시에 못박으면 자식 폭의 합이 부모를
 0.001px 수준으로 넘어서고, `float` 옆에 들어가던 블록이 아래로 밀린다. `overflow:hidden` 이
 걸려 있으면 그대로 잘려 글자가 사라진다. 못박는 값은 소수점 두 자리에서 내린다.
-(`test/subpixel.html` 에 최소 재현이 있다.)
+(`tools/fixtures/subpixel.html` 에 최소 재현이 있다.)
 
 **`elementsFromPoint` 는 히트테스트다.** `pointer-events:none` 요소를 건너뛰므로 스택에서
 자기 자신을 못 만나고 뒤의 형제 배경을 만나 "가려짐"으로 오판한다. `pointer-events` 는
@@ -179,11 +179,11 @@ padding 을 더하면 요소가 그만큼 부푼다.
 ## 개발
 
 ```bash
-node test/run.mjs                       # 합성 페이지로 27개 항목 검증
-node test/live.mjs <URL> <이름> [스크롤Y] [overlay|freeze]
-node test/diff.mjs <URL> <이름>          # 같은 id 요소의 좌표를 비교해 레이아웃 오차 추적
-node test/probe.mjs <URL> '<JS 식>' [316x598]   # 실제 페이지에서 식 평가 (뷰포트 강제 가능)
-node test/uishot.mjs ko,en              # 팝업 UI 를 언어 × 라이트/다크로 촬영
+node tools/run.mjs                       # 합성 페이지로 27개 항목 검증
+node tools/live.mjs <URL> <이름> [스크롤Y] [overlay|freeze]
+node tools/diff.mjs <URL> <이름>          # 같은 id 요소의 좌표를 비교해 레이아웃 오차 추적
+node tools/probe.mjs <URL> '<JS 식>' [316x598]   # 실제 페이지에서 식 평가 (뷰포트 강제 가능)
+node tools/uishot.mjs ko,en              # 팝업 UI 를 언어 × 라이트/다크로 촬영
 ```
 
 **만들어 낸 것은 전부 `out/` 아래로 모인다** — 캡처 결과, 팝업 UI, 스크린샷 템플릿,
@@ -202,13 +202,13 @@ node test/uishot.mjs ko,en              # 팝업 UI 를 언어 × 라이트/다�
 그 안에 든 글자가 무엇을 잡아내는지 말한다.
 
 ```bash
-python3 scripts/make_icons.py orange icons   # 색만 바꿔 다시 뽑는다
-node test/render_text.mjs                    # 글자 마스크 재생성 (폰트는 자동으로 받아온다)
+python3 tools/make_icons.py orange icons   # 색만 바꿔 다시 뽑는다
+node tools/render_text.mjs                    # 글자 마스크 재생성 (폰트는 자동으로 받아온다)
 ```
 
 - **크기마다 다르게 그린다.** 16px 에서 브래킷 안쪽은 9px 폭이라 네 글자가 물리적으로 안 들어간다.
   32px 부터는 `H` 한 글자로 바꾼다. 축소가 아니라 다시 그리는 것이다.
-- **글자는 폰트를 렌더한 마스크를 쓴다** (`assets/mask-*.png`). 획으로 흉내내면 자간과 꺾임이
+- **글자는 폰트를 렌더한 마스크를 쓴다** (`tools/masks/*.png`). 획으로 흉내내면 자간과 꺾임이
   어긋나고, 폰트 파일을 심으면 재현이 안 된다.
 - 배경은 애플 아이콘 문법 — 모서리는 원호가 아닌 연속 곡률(초타원 n=5), 수직 그라데이션, 상단 광택.
 - 팝업 헤더 로고는 별도 SVG 를 그리지 않고 `icons/icon32.png` 를 그대로 쓴다. 두 그림이 어긋날 여지를 없앴다.
@@ -216,11 +216,10 @@ node test/render_text.mjs                    # 글자 마스크 재생성 (폰�
 ### 패키지
 
 ```bash
-./scripts/package.sh          # out/pkg/capture-to-html-<버전>.zip
+./tools/package.sh          # out/pkg/capture-to-html-<버전>.zip
 ```
 
-확장이 실제로 쓰는 파일만 담는다. `test/`·`scripts/`·`store/`·`assets/` 는 개발용이라 빠지고,
-`fonts/` 도 팝업이 쓰는 라틴 서브셋만 담는다(한글 서브셋은 스크린샷 템플릿용이라 제외).
+`src/` 를 통째로 담는다. 확장에 들어갈 것만 그 안에 있으므로 개발 파일이 섞일 여지가 없다.
 매니페스트가 참조하는 파일이 실제로 들어갔는지 zip 을 열어 확인한 뒤 끝난다.
 
 ### 스토어 스크린샷
@@ -235,16 +234,24 @@ node store/shots/build-template.mjs   # out/template.html 을 만든다
 ## 파일 구조
 
 ```
-manifest.json          매니페스트 (MV3)
-_locales/ko, en        번역 문구
-content.js             캡처 엔진 — 가시성 판정, 스타일 diff, 리소스 인라인
-background.js          service worker — 교차 출처 리소스 대행 fetch
-popup.html / popup.js  팝업 UI
-icons/                 툴바·스토어 아이콘 16·32·48·128px
-fonts/                 Pretendard 서브셋 — 라틴 30KB(팝업용), 한글 436KB(템플릿용)
-assets/                아이콘 글자 마스크 (생성용, 확장에는 안 들어감)
-scripts/               아이콘 생성기, 폰트 서브셋, 패키지 스크립트
-test/                  검증 스크립트와 픽스처
-store/                 스토어 등록 문안과 스크린샷 템플릿
+src/                   확장 본체 — chrome://extensions 에서 이 폴더를 로드한다
+  manifest.json        매니페스트 (MV3)
+  content.js           캡처 엔진 — 가시성 판정, 스타일 diff, 리소스 인라인
+  background.js        service worker — 교차 출처 리소스 대행 fetch
+  popup.html/js        팝업 UI
+  icons/               툴바·스토어 아이콘 16·32·48·128px
+  fonts/               Pretendard 라틴 서브셋 30KB (전체는 2,009KB)
+  _locales/ko, en      번역 문구
+
+tools/                 개발 도구 — 확장에는 안 들어간다
+  run·live·diff·probe·shot·uishot.mjs   CDP 검증 스크립트
+  fixtures/            버그 최소 재현 페이지
+  make_icons.py        아이콘 생성기
+  render_text.mjs      아이콘 글자 마스크 렌더
+  masks/               그 결과물 (생성 소재)
+  subset_font.py       템플릿용 글꼴 서브셋
+  package.sh           제출용 zip
+
+store/                 스토어 자료 — 등록 문안, 스크린샷 템플릿
 out/                   만들어 낸 것 전부 (저장소에 없음)
 ```

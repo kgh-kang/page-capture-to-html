@@ -32,6 +32,6 @@ sub.populate(unicodes=uni)
 sub.subset(font)
 font.flavor = 'woff2'
 
-out = pathlib.Path('fonts/pretendard-kr.woff2')
+out = pathlib.Path('store/shots/pretendard-kr.woff2')
 font.save(out)
 print(f'{out} · {out.stat().st_size // 1024}KB · {len(uni)}자')
