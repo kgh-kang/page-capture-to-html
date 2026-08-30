@@ -249,9 +249,67 @@ async function sheetToPng(sheet) {
   await img.decode();
   const c = document.createElement('canvas');
   c.width = 1280; c.height = 800;
-  c.getContext('2d').drawImage(img, 0, 0);
-  return new Promise((res, rej) =>
-    c.toBlob((b) => (b ? res(b) : rej(new Error('캔버스가 비었습니다'))), 'image/png'));
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 1280, 800);   // 투명한 곳이 검게 나오지 않도록
+  g.drawImage(img, 0, 0);
+  return toPng24(c);
+}
+
+/* 스토어는 알파 없는 24비트 PNG 만 받는다. canvas.toBlob 은 무조건 32비트 RGBA 를 내므로
+   RGB 만 뽑아 PNG 를 직접 조립한다. 압축은 브라우저의 CompressionStream 이 해준다. */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+const crc32 = (b) => {
+  let c = 0xffffffff;
+  for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+};
+
+async function toPng24(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const rgba = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  // 행마다 필터 바이트를 앞에 두는 게 PNG 규격이다. Up(2) 는 윗줄과의 차이만 남겨
+  // 그라디언트 배경에서 크기를 크게 줄여 준다.
+  const stride = w * 3;
+  const raw = new Uint8Array(h * (1 + stride));
+  const cur = new Uint8Array(stride), prev = new Uint8Array(stride);
+  let p = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0, s = y * w * 4, d = 0; x < w; x++, s += 4) {
+      cur[d++] = rgba[s]; cur[d++] = rgba[s + 1]; cur[d++] = rgba[s + 2];
+    }
+    raw[p++] = 2;
+    for (let i = 0; i < stride; i++) raw[p++] = (cur[i] - prev[i]) & 255;
+    prev.set(cur);
+  }
+  const idat = new Uint8Array(await new Response(
+    new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
+
+  const chunk = (type, data) => {
+    const out = new Uint8Array(12 + data.length);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, data.length);
+    for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+    out.set(data, 8);
+    dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+    return out;
+  };
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, w); dv.setUint32(4, h);
+  ihdr[8] = 8;   // 채널당 8비트
+  ihdr[9] = 2;   // 컬러타입 2 = 트루컬러, 알파 없음
+  return new Blob([
+    new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', new Uint8Array(0)),
+  ], { type: 'image/png' });
 }
 
 async function savePng(sheet, name, quiet) {
