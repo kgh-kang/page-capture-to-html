@@ -5,6 +5,7 @@
 //   node store/shots/embed-shots.mjs ko=<주소> en=<주소>    언어별로 따로
 //   node store/shots/embed-shots.mjs <파일.html>            확장이 저장한 결과물을 그대로
 //   ... --scroll=400                                        찍기 전에 그만큼 내린다
+//   ... --dark                                              다크 모드로 찍는다(기본은 라이트)
 //
 // 브라우저 안에서는 다른 출처의 화면을 그림으로 옮길 수 없다(canvas 가 오염된다).
 // 그래서 크롬을 따로 띄워 찍고, 그 PNG 를 템플릿에 박아 둔다.
@@ -23,6 +24,7 @@ const W = 1104, H = 482;
 
 const args = process.argv.slice(2);
 const scroll = Number((args.find((a) => a.startsWith('--scroll=')) || '').split('=')[1] || 0);
+const dark = args.includes('--dark');
 const rest = args.filter((a) => !a.startsWith('--'));
 const asUrl = (v) => (/^(https?|file):/i.test(v) ? v : 'file://' + resolve(process.cwd(), v));
 
@@ -61,6 +63,9 @@ const send = (m, p = {}) => { const i = ++id; ws.send(JSON.stringify({ id: i, me
 
 await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+// 헤드리스는 시스템 설정을 따라가 다크로 찍히기도 한다. 시트 배경이 밝으므로 라이트로 고정한다.
+await send('Emulation.setEmulatedMedia', {
+  features: [{ name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' }] });
 
 const shots = {};
 for (const [lang, url] of Object.entries(PAGES)) {
