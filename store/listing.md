@@ -82,7 +82,12 @@ Saves the web page screen the user is looking at as a single HTML file.
 
 ### 권한별 정당성
 
-**`scripting`**
+> **어디에 넣나** — 대시보드 → 해당 항목 → 왼쪽 메뉴 **개인정보 보호 및 보안** →
+> **권한 사유** 구역. 확장이 요청한 권한마다 칸이 따로 있다.
+> **칸마다 1000자 제한**이 있어 한국어·영어 중 하나만 들어간다.
+> 심사는 영어로 읽히므로 **영어를 넣는 편이 안전하다**.
+
+**`scripting`** — 대시보드 라벨: **'scripting' 권한이 필요한 이유**
 ```
 사용자가 툴바 버튼을 누르거나 단축키를 눌렀을 때, 그 탭에서 화면 내용을 읽어 HTML 로
 옮기는 코드를 실행합니다. 사용자가 저장을 요청하지 않은 탭에는 코드를 넣지 않습니다.
@@ -93,7 +98,7 @@ user pressed the toolbar button or the shortcut. No code is injected into tabs t
 did not ask to capture. That code ships inside the extension and is never fetched remotely.
 ```
 
-**`storage`**
+**`storage`** — 대시보드 라벨: **'storage' 권한이 필요한 이유**
 ```
 사용자가 고른 옵션(예: 이미지를 포함할지)을 브라우저에 로컬로 저장해, 다음에 열었을 때
 같은 설정이 유지되게 합니다. 동기화하지 않으며 개인정보를 담지 않습니다.
@@ -102,37 +107,24 @@ Stores the user's option choices locally so they persist between uses. Nothing i
 and no personal data is kept.
 ```
 
-**`host_permissions: <all_urls>`**
+**`host_permissions: <all_urls>`** — 대시보드 라벨: **호스트 권한이 필요한 이유**
+
+한국어 (488자)
 ```
-저장한 HTML 파일 하나만으로 화면이 재현되려면, 그 페이지가 참조하는 이미지와 웹폰트를
-파일 안에 담아야 합니다. 그 리소스들은 페이지와 다른 도메인(이미지 CDN, 폰트 서버)에
-있는 경우가 대부분이고, Manifest V3 에서 콘텐츠 스크립트는 교차 출처 요청을 할 수 없어
-서비스 워커가 대신 받아옵니다. 사용자가 어떤 페이지를 저장할지 미리 알 수 없으므로
-특정 도메인 목록으로 좁힐 수 없습니다.
+저장한 HTML 파일 하나만으로 화면이 재현되려면 그 페이지가 참조하는 이미지와 웹폰트를 파일 안에 담아야 합니다. 그 리소스는 대개 페이지와 다른 도메인(이미지 CDN, 폰트 서버)에 있고, Manifest V3 에서 콘텐츠 스크립트는 교차 출처 요청을 할 수 없어 서비스 워커가 대신 받아옵니다.
 
-activeTab 으로는 대체할 수 없습니다. activeTab 은 사용자가 조작한 탭의 주소(origin)에
-한해 권한을 주므로, 그 페이지가 불러오는 다른 도메인의 이미지와 글꼴에는 접근하지
-못합니다. 그 경우 저장한 파일에서 이미지가 비고, 인터넷 없이 열린다는 이 확장의
-핵심 기능이 성립하지 않습니다.
+activeTab 으로는 대체할 수 없습니다. activeTab 은 사용자가 조작한 탭의 origin 에만 권한을 주므로 다른 도메인의 이미지와 글꼴에 닿지 못하고, 그러면 저장한 파일이 이미지 없이 열려 인터넷 없이 열린다는 핵심 기능이 성립하지 않습니다. 사용자가 어떤 페이지를 저장할지 미리 알 수 없으므로 도메인 목록으로 좁힐 수도 없습니다.
 
-동작 시점은 activeTab 과 같습니다. 사용자가 툴바 버튼이나 단축키를 누른 그 순간,
-그 탭에서만 실행되며 배경에서 페이지를 읽지 않습니다. 받아온 데이터는 저장 파일에
-embed 될 뿐 어떤 서버로도 전송되지 않습니다.
+동작 시점은 activeTab 과 같습니다. 사용자가 툴바 버튼이나 단축키를 누른 그 순간 그 탭에서만 실행되며, 배경에서 페이지를 읽지 않습니다. 받아온 데이터는 저장 파일에 담길 뿐 어떤 서버로도 전송되지 않습니다.
+```
 
-To make a saved HTML file self-contained, the images and web fonts a page references
-must be embedded in it. Those almost always live on different domains (image CDNs, font
-servers). Under Manifest V3 a content script cannot make cross-origin requests, so the
-service worker fetches them instead. Since the user may capture any page, the set of
-domains cannot be known in advance and cannot be narrowed to a fixed list.
+English (919자)
+```
+To make a saved HTML file self-contained, the images and web fonts a page references must be embedded in it. Those almost always live on other domains (image CDNs, font servers), and under Manifest V3 a content script cannot make cross-origin requests, so the service worker fetches them instead.
 
-activeTab is not a workable substitute. It grants access only to the origin of the tab the
-user acted on, so the images and fonts the page pulls from other domains stay out of reach.
-The saved file would then open with missing images, which defeats the extension's core
-promise of a file that opens without internet.
+activeTab is not a workable substitute: it grants access only to the origin of the tab the user acted on, so images and fonts from other domains stay out of reach and the saved file opens with them missing, which defeats the core promise of a file that opens without internet. A fixed host list is not possible either, since the user may capture any page.
 
-The timing matches activeTab regardless: the extension runs only in the tab where the user
-pressed the toolbar button or the shortcut, at that moment, and never reads pages in the
-background. Fetched data is embedded into the saved file and is never sent to any server.
+The timing still matches activeTab. The extension runs only in the tab where the user pressed the toolbar button or the shortcut, at that moment, and never reads pages in the background. Fetched data is embedded into the saved file and is never sent to any server.
 ```
 
 ### 원격 코드 사용
