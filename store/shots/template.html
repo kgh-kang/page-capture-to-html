@@ -31,15 +31,13 @@
   .chips span{font-size:13.5px;padding:7px 14px}
 
   /* 왼쪽 컬러 패널 + 브래킷 장식 (제품 아이콘과 같은 모티프) */
-  .panel{position:absolute;left:0;top:0;bottom:0;width:132px;
-    background:linear-gradient(160deg,var(--accent1),var(--accent2))}
   /* 제품 아이콘과 같은 브래킷 모티프. 창의 왼쪽 모서리를 물고 있게 둔다 */
-  .brk{position:absolute;border:6px solid #fff;width:58px;height:58px;z-index:4}
-  .brk.tl{left:106px;top:186px;border-right:0;border-bottom:0}
-  .brk.bl{left:106px;bottom:34px;border-right:0;border-top:0}
+  .brk{position:absolute;border:6px solid var(--accent1);width:58px;height:58px;z-index:4}
+  .brk.tl{left:60px;top:186px;border-right:0;border-bottom:0}
+  .brk.bl{left:60px;bottom:34px;border-right:0;border-top:0}
 
   /* 브라우저 창 목업 */
-  .win{position:absolute;left:132px;top:204px;right:-46px;bottom:-52px;
+  .win{position:absolute;left:88px;top:204px;right:-46px;bottom:-52px;
     background:#fff;border-radius:12px 0 0 0;overflow:hidden;
     box-shadow:0 26px 70px rgba(0,0,0,.28)}
   .chrome{background:#3b3f45;padding:9px 12px 0}
@@ -69,13 +67,13 @@
     padding:6px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 
   /* 카피 */
-  .copy{position:absolute;left:174px;top:52px;width:820px;z-index:3}
+  .copy{position:absolute;left:88px;top:56px;width:860px;z-index:3}
   h2{font-size:46px;line-height:1.14;letter-spacing:-.032em;font-weight:800;color:#16181d;text-wrap:balance}
   h2.light{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.25)}
   p.sub{margin-top:12px;font-size:19px;line-height:1.5;color:#5f6673;letter-spacing:-.01em}
   p.sub.light{color:rgba(255,255,255,.9)}
   [contenteditable]:focus{outline:2px solid #ffb27a;outline-offset:3px;border-radius:3px}
-  .chips{position:absolute;left:174px;top:150px;display:flex;gap:9px;z-index:3}
+  .chips{position:absolute;left:88px;top:152px;display:flex;gap:9px;z-index:3}
   .chips span{background:#fff;color:#a34a12;font-size:14.5px;font-weight:600;
     padding:8px 16px;border-radius:999px;box-shadow:0 3px 12px rgba(0,0,0,.12)}
 </style>
@@ -95,7 +93,7 @@
     <label>포인트 <input type="color" id="ac1" value="#ea580c"></label>
     <label>포인트2 <input type="color" id="ac2" value="#c2410c"></label>
     <button onclick="document.querySelectorAll('.mark').forEach(m=>m.classList.toggle('off'))">강조 켜기/끄기</button>
-    <button onclick="document.querySelectorAll('.panel,.brk').forEach(m=>m.style.display=m.style.display==='none'?'':'none')">왼쪽 패널 켜기/끄기</button>
+    <button onclick="document.querySelectorAll('.brk').forEach(m=>m.style.display=m.style.display==='none'?'':'none')">모서리 장식 켜기/끄기</button>
     <button onclick="document.querySelector('.guide').style.display='none'">안내 숨기기</button>
   </div>
 </div>
@@ -126,7 +124,7 @@ const ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHL
 document.getElementById('sheets').innerHTML = SHEETS.map((s, i) => `
 <div class="sheet" id="sheet${s.n}">
   <span class="num">${s.n} · 1280×800 — 이 상자만 캡처하세요</span>
-  <div class="panel"></div><div class="brk tl"></div><div class="brk bl"></div>
+  <div class="brk tl"></div><div class="brk bl"></div>
   <div class="copy"><h2 contenteditable>${s.title}</h2><p class="sub" contenteditable>${s.sub}</p></div>
   <div class="win">
     <div class="chrome">
