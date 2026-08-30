@@ -23,93 +23,45 @@ Saves only what you can see right now as a single HTML file.
 ### 한국어
 
 ```
-보고 있는 화면을 그대로 HTML 파일 하나로 저장합니다.
+보고 있는 화면을 그대로 HTML 파일 하나로 저장합니다. 스크롤 밖 내용, 접힌 메뉴, 팝업에 가려진 글자는 담지 않습니다.
 
-기존 저장 도구는 페이지 전체를 담습니다. 접혀 있는 메뉴, 안 열린 모달, 쓰이지도 않은
-템플릿까지 전부요. 그래서 파일을 열면 원래 보던 화면과 다른 것이 나옵니다.
+화면을 그대로 남기는 가장 단순한 방법
 
-Capture to HTML 은 반대로 갑니다. 버튼을 누른 그 순간 화면에 실제로 그려져 있던 것만
-남깁니다. 애니메이션은 그 순간 모습으로 굳고, 스크롤 밖 내용은 비워지고, 팝업에 가려
-안 보이던 글자는 저장되지 않습니다.
+스크린샷은 글자를 복사할 수 없고, 페이지 저장은 안 보이던 것까지 전부 담습니다.
+Capture to HTML 은 버튼을 누른 그 순간 화면에 실제로 그려져 있던 것만 남깁니다.
 
-■ 이런 때 씁니다
-· 나중에 사라질 화면을 그대로 남겨두고 싶을 때
-· 스크린샷으로는 글자를 복사할 수 없어 아쉬울 때
-· 페이지 전체가 아니라 지금 이 부분만 필요할 때
+Capture to HTML 이 해주는 일
+· 화면 그대로 보관: 나중에 사라질 페이지를 지금 모습 그대로 파일 하나에 담습니다
+· 글자는 살아 있게: 스크린샷과 달리 본문을 그대로 복사하고 검색할 수 있습니다
+· 가린 창은 걷어내고: 화면을 덮은 안내창을 치우고 그 아래 내용을 저장합니다
+· 인터넷 없이 열기: 이미지와 웹폰트까지 담겨서 파일 하나만 있으면 됩니다
 
-■ 무엇이 담기나
-· 화면에 보이던 글자와 이미지 (파일 하나 안에 전부)
-· 웹폰트도 함께 담아서 글자 모양이 바뀌지 않습니다
-· 입력칸에 쓰던 값, 체크 상태, 선택한 항목까지 그대로
+기록을 남겨야 하는 분, 자료를 모으는 분, 곧 사라질 화면을 붙잡아 둬야 하는 분께 맞습니다.
 
-■ 무엇이 빠지나
-· 화면 밖에 있던 내용
-· 접힌 메뉴, 안 열린 대화상자
-· 팝업이나 배너에 덮여 안 보이던 것
-· 애니메이션, 마우스 올렸을 때 나오는 효과, 원본 페이지의 스크립트
-
-■ 고를 수 있는 것
-· 지금 화면만 — 캡처한 그 화면 그대로
-· 페이지 전체 — 처음부터 끝까지. 이때도 숨겨진 메뉴와 안 열린 대화상자는 빠집니다
-· 아무것도 안 눌리게 굳히기 — 링크와 입력을 전부 끊어 읽기 전용 파일로
-· 덮은 안내창 치우기 — 화면을 가린 팝업을 걷어내고 그 아래를 저장
-· 사진·글꼴을 뺄 수 있어 파일을 가볍게 만들 수도 있습니다
-
-■ 개인정보
-아무것도 수집하지 않습니다. 분석 도구도 추적기도 없고, 어떤 서버로도 데이터를 보내지
-않습니다. 모든 처리가 사용자의 컴퓨터 안에서 끝납니다.
-
-다만 저장된 파일에는 캡처 당시 화면 내용이 그대로 담깁니다. 로그인해야 보이는 이미지,
-그리고 파일 첫 줄 주석에 원래 주소와 저장 시각이 함께 남습니다. 파일을 남에게 보내기
-전에 한 번 확인해 주세요.
-
-소스 코드: https://github.com/kgh-kang/page-capture-to-html
+수집하는 정보는 없습니다. 분석 도구도 추적기도 없고, 모든 처리가 브라우저 안에서 끝납니다.
+다만 저장한 파일에는 캡처 당시 화면이 그대로 담기니, 남에게 보내기 전에 한 번 확인해 주세요.
 ```
 
 ### English
 
 ```
-Saves the screen you are looking at as a single HTML file.
+Saves the screen you are looking at as a single HTML file. Off-screen content, collapsed menus, and text hidden behind pop-ups are left out.
 
-Other saving tools capture the whole page — collapsed menus, unopened dialogs, unused
-templates and all. Open the result and you get something different from what you were
-looking at.
+The simplest way to keep a screen exactly as it looked
 
-Capture to HTML goes the other way. It keeps only what was actually drawn on screen the
-moment you pressed the button. Animations freeze where they were, off-screen content is
-emptied out, and text hidden behind a dialog is not saved.
+A screenshot will not let you copy the text, and saving a page pulls in everything you could not see.
+Capture to HTML keeps only what was actually drawn on screen the moment you pressed the button.
 
-■ When it helps
-· Keeping a screen that will not be there later
-· When a screenshot is not enough because you need to copy the text
-· When you want this part of the page, not the whole thing
+What Capture to HTML does for you
+· Keep the screen as it was: Hold on to a page that will not be there tomorrow, in one file
+· Text stays text: Unlike a screenshot, you can select, copy and search the words
+· Clear what covers it: Take the dialog away and save what was underneath
+· Opens without internet: Images and web fonts are embedded, so the file is all you need
 
-■ What goes in
-· Every visible word and image, all inside one file
-· Web fonts are embedded too, so letterforms do not shift
-· Typed values, checkboxes and selections stay as they were
+Made for people keeping records, collecting references, or holding on to a screen before it disappears.
 
-■ What stays out
-· Anything off-screen
-· Collapsed menus and unopened dialogs
-· Text covered by pop-ups or banners
-· Animations, hover effects, and the original page scripts
-
-■ Options
-· Just this screen — exactly what you captured
-· Whole page — top to bottom. Hidden menus and unopened dialogs are still left out
-· Freeze — cuts every link and input so nothing is clickable
-· Remove covering dialogs — takes away the pop-up and saves what was underneath
-· Images and fonts can be left out for a much smaller file
-
-■ Privacy
-Nothing is collected. No analytics, no trackers, and no data sent to any server.
-Everything happens on your own computer.
-
-That said, a saved file holds exactly what was on screen, which can include images that
-are only visible while you are signed in. Please review a file before sharing it.
-
-Source code: https://github.com/kgh-kang/page-capture-to-html
+Nothing is collected. No analytics, no trackers, and everything happens inside your browser.
+That said, a saved file holds exactly what was on screen — please review it before sharing.
 ```
 
 ---
