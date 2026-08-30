@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Page Capture to HTML",
-  "version": "0.5.0",
-  "description": "지금 화면에 보이는 것만 HTML 파일 하나로 저장합니다.",
+  "name": "__MSG_extName__",
+  "version": "0.6.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "ko",
   "permissions": [
     "scripting",
     "activeTab",
@@ -15,7 +16,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Page Capture to HTML",
+    "default_title": "__MSG_extName__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -30,7 +31,7 @@
         "default": "Alt+Shift+S",
         "mac": "Alt+Shift+S"
       },
-      "description": "보이는 화면을 HTML 로 저장"
+      "description": "__MSG_cmdCapture__"
     }
   },
   "icons": {

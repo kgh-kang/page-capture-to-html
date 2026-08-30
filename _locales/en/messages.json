@@ -1,0 +1,210 @@
+{
+  "extName": {
+    "message": "Page Capture to HTML"
+  },
+  "extDescription": {
+    "message": "Saves only what you can see right now as a single HTML file."
+  },
+  "cmdCapture": {
+    "message": "Save the visible screen as HTML"
+  },
+  "checking": {
+    "message": "Checking this page…"
+  },
+  "cannotCapture": {
+    "message": "This page can't be saved (it's a browser screen)"
+  },
+  "needReload": {
+    "message": "Reload the page, then open this again"
+  },
+  "viewport": {
+    "message": "$W$ × $H$",
+    "placeholders": {
+      "w": {
+        "content": "$1"
+      },
+      "h": {
+        "content": "$2"
+      }
+    }
+  },
+  "scrolledBy": {
+    "message": " · scrolled down $PX$px",
+    "placeholders": {
+      "px": {
+        "content": "$1"
+      }
+    }
+  },
+  "atTop": {
+    "message": " · at the top"
+  },
+  "modeHeading": {
+    "message": "How should it be saved?"
+  },
+  "modeCrop": {
+    "message": "Just this screen"
+  },
+  "modeCropDesc": {
+    "message": "Opens to exactly what you're looking at right now"
+  },
+  "modeFull": {
+    "message": "Whole page"
+  },
+  "modeFullDesc": {
+    "message": "Keeps the full height, but empties whatever was off-screen"
+  },
+  "save": {
+    "message": "Save this screen"
+  },
+  "saving": {
+    "message": "Saving…"
+  },
+  "savingHint": {
+    "message": "large pages take a few seconds"
+  },
+  "noticeTitle": {
+    "message": "Something is covering the page"
+  },
+  "noticeDesc": {
+    "message": "Saved as-is, whatever the dialog covers will come out blank."
+  },
+  "noticeToggle": {
+    "message": "Remove it and save what's underneath"
+  },
+  "noticeOnTitle": {
+    "message": "The dialog will be removed"
+  },
+  "noticeOnDesc": {
+    "message": "Saving now captures the page without it."
+  },
+  "advanced": {
+    "message": "More options"
+  },
+  "optFreeze": {
+    "message": "Freeze — nothing clickable"
+  },
+  "optFreezeDesc": {
+    "message": "Cuts every link, button and input, and leaves no scripts behind. Clicking does nothing"
+  },
+  "optOverlay": {
+    "message": "Remove covering dialogs"
+  },
+  "optOverlayDesc": {
+    "message": "Takes away pop-ups and banners, and saves what was underneath"
+  },
+  "optOcclusion": {
+    "message": "Drop covered text"
+  },
+  "optOcclusionDesc": {
+    "message": "Also removes text that was hidden behind dialogs or banners"
+  },
+  "optImages": {
+    "message": "Include images"
+  },
+  "optImagesDesc": {
+    "message": "Turn off for a much smaller file, but pictures come out blank"
+  },
+  "optFonts": {
+    "message": "Include fonts"
+  },
+  "optFontsDesc": {
+    "message": "Turn off and letter shapes and line breaks may shift slightly"
+  },
+  "optFrames": {
+    "message": "Capture inner frames"
+  },
+  "optFramesDesc": {
+    "message": "Needed for pages that load their body separately, like Naver Blog"
+  },
+  "optScroll": {
+    "message": "Restore scroll position"
+  },
+  "optScrollDesc": {
+    "message": "Turn off and the saved file contains no scripts at all"
+  },
+  "optScrollOff": {
+    "message": "Freeze already removes every script, so this has no effect"
+  },
+  "optPin": {
+    "message": "Pin measured sizes"
+  },
+  "optPinDesc": {
+    "message": "Locks tables and images to their original size. Turn off and the layout may shift"
+  },
+  "savedTitle": {
+    "message": "Saved · $SIZE$",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "savedStats": {
+    "message": "Kept $KEPT$ visible spots and emptied $HIDDEN$ hidden ones.",
+    "placeholders": {
+      "kept": {
+        "content": "$1"
+      },
+      "hidden": {
+        "content": "$2"
+      }
+    }
+  },
+  "statImages": {
+    "message": "$N$ images",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statFonts": {
+    "message": "$N$ fonts",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statFrames": {
+    "message": "$N$ inner frames",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statOverlays": {
+    "message": "$N$ dialogs removed",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "whereSaved": {
+    "message": "It's in your Downloads folder. Press ⌘⇧J to open it."
+  },
+  "failedTitle": {
+    "message": "Couldn't save"
+  },
+  "errNoTab": {
+    "message": "No open tab found."
+  },
+  "errNoResponse": {
+    "message": "The page changed. Reload it (⌘R) and try again."
+  },
+  "errChromePage": {
+    "message": "This is a screen Chrome draws itself, so it can't be saved."
+  },
+  "errStale": {
+    "message": "The extension was updated. Please reload the page."
+  },
+  "errBusy": {
+    "message": "A save is already running."
+  },
+  "errUnknown": {
+    "message": "Something went wrong while saving. Reload the page and try again."
+  }
+}

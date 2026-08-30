@@ -34,6 +34,16 @@ Chrome Web Store 를 거치지 않고 로컬에서 바로 쓴다.
 | 열 때 보던 위치로 | `restoreScroll` | 켬 | 끄면 출력에 스크립트가 하나도 없다 |
 | 크기 그대로 고정 | `pin` | 켬 | 표·사진 크기를 원본 기준으로 못박음 |
 
+## 언어
+
+`_locales/ko`, `_locales/en` 두 벌이고 브라우저 언어를 따라간다(기본 한국어).
+팝업 문구는 `data-i18n` 속성으로 표시하고 `chrome.i18n` 이 채운다.
+확장 밖에서 `popup.html` 을 직접 열었을 때는 `messages.json` 을 직접 읽어 미리보기가 된다.
+
+```bash
+node test/uishot.mjs ko,en     # 두 언어 × 라이트·다크로 촬영
+```
+
 ## 동작 방식
 
 ### 1. 가시성 판정
@@ -130,7 +140,7 @@ node test/run.mjs                       # 합성 페이지로 27개 항목 검�
 node test/live.mjs <URL> <이름> [스크롤Y] [overlay|freeze]
 node test/diff.mjs <URL> <이름>          # 같은 id 요소의 좌표를 비교해 레이아웃 오차 추적
 node test/probe.mjs <URL> '<JS 식>'      # 실제 페이지에서 식을 평가 (원인 추적용)
-node test/uishot.mjs                    # 팝업 UI 를 라이트/다크로 촬영
+node test/uishot.mjs ko,en              # 팝업 UI 를 언어 × 라이트/다크로 촬영
 ```
 
 의존성 없이 Node 22+ 내장 WebSocket 으로 Chrome DevTools Protocol 에 직접 붙는다.
@@ -169,6 +179,7 @@ node test/render_text.mjs                    # 글자 마스크 재생성 (폰�
 
 ```
 manifest.json          매니페스트 (MV3)
+_locales/ko, en        번역 문구
 content.js             캡처 엔진 — 가시성 판정, 스타일 diff, 리소스 인라인
 background.js          service worker — 교차 출처 리소스 대행 fetch
 popup.html / popup.js  팝업 UI

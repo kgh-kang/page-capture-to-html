@@ -4,12 +4,48 @@ const DEFAULTS = {
   dropOverlay: false, freeze: false,
 };
 const TOGGLES = ['freeze', 'dropOverlay', 'occlusion', 'images', 'fonts', 'frames', 'restoreScroll', 'pin'];
+const CAPTURABLE = /^(https?|file):/;
 
 const $ = (id) => document.getElementById(id);
 const go = $('go');
 const result = $('result');
+const notice = $('notice');
 let opts = { ...DEFAULTS };
 let tab = null;
+let overlayFound = false;
+
+/* ---------- 문구 ---------- */
+
+// 확장 안에서는 chrome.i18n, 밖(미리보기)에서는 messages.json 을 직접 읽는다.
+let messages = null;
+function t(key, ...args) {
+  if (messages) {
+    const m = messages[key];
+    if (!m) return key;
+    return m.message.replace(/\$([A-Z]+)\$/g, (_, name) => {
+      const ph = m.placeholders && m.placeholders[name.toLowerCase()];
+      const i = ph ? parseInt(String(ph.content).slice(1), 10) - 1 : 0;
+      return args[i] != null ? args[i] : '';
+    });
+  }
+  try { return chrome.i18n.getMessage(key, args.map(String)) || key; } catch (_) { return key; }
+}
+
+async function loadMessages() {
+  if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('extName')) {
+    document.documentElement.lang = chrome.i18n.getUILanguage().split('-')[0];
+    return;
+  }
+  const lang = (navigator.language || 'ko').startsWith('en') ? 'en' : 'ko';
+  document.documentElement.lang = lang;
+  try {
+    messages = await (await fetch(`_locales/${lang}/messages.json`)).json();
+  } catch (_) { /* 문구 없이도 화면은 뜬다 */ }
+}
+
+function paintText() {
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+}
 
 /* ---------- 옵션 상태 ---------- */
 
@@ -20,62 +56,80 @@ function paintMode() {
   $('c-full').querySelector('input').checked = !opts.crop;
 }
 
+function paintOptions() {
+  paintMode();
+  for (const k of TOGGLES) $(k).checked = !!opts[k];
+  // 굳히면 자동 실행 코드가 아예 안 들어가므로 '열 때 보던 위치로' 는 쓰이지 않는다.
+  const scroll = $('restoreScroll');
+  scroll.disabled = !!opts.freeze;
+  $('opt-scroll').classList.toggle('muted', !!opts.freeze);
+  $('scrollWhy').hidden = !opts.freeze;
+  paintNotice();
+}
+
 function save() {
   try { chrome.storage.local.set({ opts }); } catch (_) {}
 }
 
 function wire() {
   for (const el of document.querySelectorAll('input[name=mode]')) {
-    el.addEventListener('change', () => { opts.crop = el.value === 'crop'; paintMode(); save(); });
+    el.addEventListener('change', () => { opts.crop = el.value === 'crop'; paintOptions(); save(); });
   }
   for (const k of TOGGLES) {
-    const el = $(k);
-    el.addEventListener('change', () => { opts[k] = el.checked; paintOptions(); save(); });
+    $(k).addEventListener('change', (e) => { opts[k] = e.target.checked; paintOptions(); save(); });
   }
-  // 배너의 스위치는 '덮은 안내창 치우기' 와 같은 값을 가리킨다
-  $('dropOverlay2').addEventListener('change', (e) => {
+}
+
+/* ---------- 덮개 안내 ---------- */
+
+function paintNotice() {
+  if (!overlayFound) { notice.innerHTML = ''; return; }
+  const on = !!opts.dropOverlay;
+  notice.innerHTML = `
+    <div class="notice-box">
+      <b>${esc(t(on ? 'noticeOnTitle' : 'noticeTitle'))}</b>
+      <p>${esc(t(on ? 'noticeOnDesc' : 'noticeDesc'))}</p>
+      <label class="opt" style="padding:0;border:0">
+        <span class="sw"><input type="checkbox" id="noticeToggle"${on ? ' checked' : ''}><i></i></span>
+        <span class="txt"><b>${esc(t('noticeToggle'))}</b></span>
+      </label>
+    </div>`;
+  $('noticeToggle').addEventListener('change', (e) => {
     opts.dropOverlay = e.target.checked; paintOptions(); save();
   });
 }
 
-function paintOptions() {
-  paintMode();
-  for (const k of TOGGLES) $(k).checked = !!opts[k];
-  $('dropOverlay2').checked = !!opts.dropOverlay;
-  // 굳히면 자동 실행 코드가 아예 안 들어가므로 '열 때 보던 위치로' 는 의미가 없어진다.
-  const scroll = $('restoreScroll');
-  scroll.disabled = !!opts.freeze;
-  scroll.closest('.opt').classList.toggle('muted', !!opts.freeze);
-}
-
-/* ---------- 현재 페이지 정보 ---------- */
-
-const CAPTURABLE = /^(https?|file):/;
+/* ---------- 현재 페이지 ---------- */
 
 async function loadTab() {
-  const [t] = await chrome.tabs.query({ active: true, currentWindow: true });
-  tab = t;
-  if (!t) return fail('열려 있는 탭을 찾지 못했어요.');
+  const [x] = await chrome.tabs.query({ active: true, currentWindow: true });
+  tab = x;
+  if (!tab) { $('pageMeta').textContent = t('errNoTab'); return; }
 
-  $('pageTitle').textContent = t.title || t.url || '';
-  if (!CAPTURABLE.test(t.url || '')) {
-    $('pageMeta').textContent = '이 페이지는 저장할 수 없어요 (브라우저 내부 화면)';
-    go.disabled = true;
-    return;
-  }
+  $('pageTitle').textContent = tab.title || tab.url || '';
+  if (!CAPTURABLE.test(tab.url || '')) { $('pageMeta').textContent = t('cannotCapture'); return; }
 
   try {
     const [{ result: v }] = await chrome.scripting.executeScript({
-      target: { tabId: t.id },
-      func: () => ({ w: innerWidth, h: innerHeight, y: Math.round(scrollY), max: document.documentElement.scrollHeight }),
+      target: { tabId: tab.id },
+      func: () => ({ w: innerWidth, h: innerHeight, y: Math.round(scrollY) }),
     });
-    const scrolled = v.y > 0 ? ` · 아래로 ${v.y.toLocaleString()}px 내린 위치` : ' · 맨 위';
-    $('pageMeta').textContent = `${v.w} × ${v.h}${scrolled}`;
+    $('pageMeta').textContent = t('viewport', v.w, v.h) +
+      (v.y > 0 ? t('scrolledBy', v.y.toLocaleString()) : t('atTop'));
+    go.disabled = false;
   } catch (_) {
-    $('pageMeta').textContent = '페이지를 새로고침한 뒤 다시 열어 주세요';
+    $('pageMeta').textContent = t('needReload');
   }
 }
 
+async function loadShortcut() {
+  try {
+    const c = (await chrome.commands.getAll()).find((x) => x.name === 'capture');
+    if (c && c.shortcut) $('shortcut').textContent = c.shortcut;
+  } catch (_) {}
+}
+
+// content.js 를 주입하지 않고 가볍게 덮개만 확인한다.
 function detectOverlay() {
   const vw = innerWidth, vh = innerHeight, vpArea = Math.max(1, vw * vh);
   const alphaOf = (c) => {
@@ -85,97 +139,100 @@ function detectOverlay() {
     return p.length >= 4 ? parseFloat(p[3]) : 1;
   };
   if (!document.body) return false;
+  let bodyLen = 1;
+  try { bodyLen = Math.max(1, (document.body.innerText || '').length); } catch (_) {}
   for (const el of document.body.querySelectorAll('*')) {
     const cs = getComputedStyle(el);
-    const pos = cs.position;
-    if (pos !== 'fixed' && pos !== 'absolute') continue;
+    if (cs.position !== 'fixed') continue;
     if (cs.display === 'none' || cs.visibility !== 'visible' || parseFloat(cs.opacity) === 0) continue;
     const r = el.getBoundingClientRect();
-    const l = Math.max(0, r.left), t = Math.max(0, r.top);
+    const l = Math.max(0, r.left), tp = Math.max(0, r.top);
     const rr = Math.min(vw, r.right), bb = Math.min(vh, r.bottom);
-    if (rr - l <= 0 || bb - t <= 0) continue;
-    const covers = ((rr - l) * (bb - t)) / vpArea;
+    if (rr - l <= 0 || bb - tp <= 0) continue;
+    if ((el.innerText || '').length / bodyLen > 0.4) continue;
+    const covers = ((rr - l) * (bb - tp)) / vpArea;
     const z = parseInt(cs.zIndex, 10) || 0;
     const role = (el.getAttribute('role') || '').toLowerCase();
     const modal = role === 'dialog' || role === 'alertdialog' || el.getAttribute('aria-modal') === 'true';
     if ((covers > 0.85 && alphaOf(cs.backgroundColor) > 0.05) ||
-        (modal && covers > 0.03) ||
-        (covers > 0.18 && (z >= 10 || pos === 'fixed'))) return true;
+        (modal && covers > 0.03) || (z >= 10 && covers > 0.18)) return true;
   }
   return false;
 }
 
 async function checkOverlay() {
-  if (!tab) return;
+  if (!tab || !CAPTURABLE.test(tab.url || '')) return;
   try {
     const [{ result: found }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id }, func: detectOverlay,
     });
-    $('notice').hidden = !found;
-  } catch (_) { /* 접근 못 하는 페이지 */ }
-}
-
-async function loadShortcut() {
-  try {
-    const cmds = await chrome.commands.getAll();
-    const c = cmds.find((x) => x.name === 'capture');
-    if (c && c.shortcut) $('shortcut').textContent = c.shortcut;
+    overlayFound = !!found;
+    paintNotice();
   } catch (_) {}
 }
 
-/* ---------- 결과 표시 ---------- */
+/* ---------- 결과 ---------- */
 
 const nf = (n) => Number(n || 0).toLocaleString();
-
-function size(bytes) {
-  return bytes >= 1024 * 1024
-    ? (bytes / 1024 / 1024).toFixed(1) + ' MB'
-    : Math.round(bytes / 1024).toLocaleString() + ' KB';
-}
+const size = (b) => b >= 1024 * 1024
+  ? (b / 1024 / 1024).toFixed(1) + ' MB'
+  : Math.round(b / 1024).toLocaleString() + ' KB';
 
 function ok(r) {
   const s = r.stats || {};
   const bits = [];
-  if (s.images) bits.push(`사진 ${nf(s.images)}장`);
-  if (s.fonts) bits.push(`글꼴 ${nf(s.fonts)}개`);
-  if (s.frames) bits.push(`안쪽 화면 ${nf(s.frames)}개`);
-  if (s.overlays) bits.push(`걷어낸 안내창 ${nf(s.overlays)}개`);
+  if (s.images) bits.push(t('statImages', nf(s.images)));
+  if (s.fonts) bits.push(t('statFonts', nf(s.fonts)));
+  if (s.frames) bits.push(t('statFrames', nf(s.frames)));
+  if (s.overlays) bits.push(t('statOverlays', nf(s.overlays)));
   result.innerHTML = `
     <div class="card ok">
-      <b>저장했어요 · ${size(r.bytes)}</b>
+      <b>${esc(t('savedTitle', size(r.bytes)))}</b>
       <div class="file">${esc(r.name)}</div>
-      <div class="stats">화면에 보이던 ${nf(s.kept)}개를 담고,
-        안 보이던 ${nf((s.shells || 0) + (s.dropped || 0))}개는 비웠어요.${
-        bits.length ? '<br>' + bits.join(' · ') : ''}</div>
+      <div class="stats">${esc(t('savedStats', nf(s.kept), nf((s.shells || 0) + (s.dropped || 0))))}${
+        bits.length ? '<br>' + esc(bits.join(' · ')) : ''}<br>${esc(t('whereSaved'))}</div>
     </div>`;
 }
 
-function fail(msg) {
-  result.innerHTML = `<div class="card err"><b>저장하지 못했어요</b><div class="stats">${esc(msg)}</div></div>`;
+// 원문 오류는 영문 스택이라 그대로 보여주면 아무 도움이 안 된다.
+function friendly(msg) {
+  const m = String(msg || '');
+  if (/Receiving end does not exist|Could not establish|message port closed/i.test(m)) return t('errNoResponse');
+  if (/Cannot access|chrome:\/\/|extension:\/\//i.test(m)) return t('errChromePage');
+  if (/Extension context invalidated/i.test(m)) return t('errStale');
+  if (m === t('errBusy') || /이미 저장하는 중|already running/i.test(m)) return t('errBusy');
+  return t('errUnknown');
 }
 
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function fail(msg) {
+  result.innerHTML = `<div class="card err"><b>${esc(t('failedTitle'))}</b>
+    <div class="stats">${esc(msg)}</div></div>`;
 }
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* ---------- 캡처 ---------- */
 
 async function capture() {
   go.disabled = true;
+  go.setAttribute('aria-busy', 'true');
   const label = go.innerHTML;
-  go.innerHTML = '<span class="spinner"></span>저장하는 중…';
+  go.innerHTML = `<span class="spinner"></span>${esc(t('saving'))}<span class="hint">${esc(t('savingHint'))}</span>`;
   result.innerHTML = '';
   try {
-    if (!tab) throw new Error('탭을 찾지 못했어요.');
+    if (!tab) throw new Error(t('errNoTab'));
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
     const r = await chrome.tabs.sendMessage(tab.id, { type: 'VSNAP_CAPTURE', opts });
-    if (!r) throw new Error('페이지가 응답하지 않아요. 새로고침한 뒤 다시 시도해 주세요.');
-    if (!r.ok) throw new Error(r.error || '알 수 없는 문제가 생겼어요.');
+    if (!r) throw new Error('no response');
+    if (!r.ok) throw new Error(r.error || 'unknown');
     ok(r);
   } catch (e) {
-    fail((e && e.message) || String(e));
+    console.error('[page-capture]', e);
+    fail(friendly(e && e.message));
   } finally {
     go.disabled = false;
+    go.removeAttribute('aria-busy');
     go.innerHTML = label;
   }
 }
@@ -183,20 +240,24 @@ async function capture() {
 /* ---------- 시작 ---------- */
 
 async function init() {
-  // 확장 밖(브라우저에서 popup.html 을 직접 열었을 때)에서도 모양을 확인할 수 있게 한다.
+  await loadMessages();
+  paintText();
+
   const inExtension = typeof chrome !== 'undefined' && chrome.storage && chrome.tabs;
-  if (!inExtension) {
+  if (!inExtension) {                       // 브라우저에서 popup.html 을 직접 열었을 때
     paintOptions(); wire();
     $('pageTitle').textContent = '일상 속 상상 : 네이버 블로그';
-    $('pageMeta').textContent = '1280 × 720 · 아래로 600px 내린 위치';
+    $('pageMeta').textContent = t('viewport', 1280, 720) + t('scrolledBy', '600');
     $('shortcut').textContent = '⌥⇧S';
-    if (location.hash.includes('notice')) $('notice').hidden = false;
+    go.disabled = false;
+    if (location.hash.includes('notice')) { overlayFound = true; paintNotice(); }
     if (location.hash.includes('done')) {
       ok({ bytes: 449639, name: 'Npay 증권_20260829-125953.html',
            stats: { kept: 238, shells: 766, dropped: 23, images: 2, fonts: 4, frames: 1, overlays: 1 } });
     }
     return;
   }
+
   const { opts: saved } = await chrome.storage.local.get('opts');
   opts = { ...DEFAULTS, ...(saved || {}) };
   paintOptions();

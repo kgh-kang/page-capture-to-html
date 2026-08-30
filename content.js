@@ -82,7 +82,10 @@ const URL_RE = /url\(\s*(['"]?)([^'")]*)\1\s*\)/g;
 chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
   if (!msg) return;
   if (msg.type === 'VSNAP_CAPTURE') {
-    main(msg.opts || {}).then(respond, (e) => respond({ ok: false, error: String((e && e.stack) || e) }));
+    main(msg.opts || {}).then(respond, (e) => {
+      console.error('[page-capture]', e);
+      respond({ ok: false, error: (e && e.message) || String(e) });
+    });
     return true;
   }
 });
@@ -1017,7 +1020,16 @@ function download(html, name) {
   setTimeout(() => URL.revokeObjectURL(url), 20000);
 }
 
+let busy = false;
+
+function msg(key, fallback) {
+  try { return chrome.i18n.getMessage(key) || fallback; } catch (_) { return fallback; }
+}
+
 async function main(opts) {
+  // 같은 탭에서 두 번 겹쳐 돌면 샌드박스와 캐시가 서로를 덮어쓴다.
+  if (busy) return { ok: false, error: msg('errBusy', '이미 저장하는 중이에요.') };
+  busy = true;
   const t0 = performance.now();
   openSandbox();
   try {
@@ -1033,6 +1045,8 @@ async function main(opts) {
     };
   } finally {
     closeSandbox();
+    resCache.clear();
+    busy = false;
   }
 }
 })();

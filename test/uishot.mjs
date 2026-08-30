@@ -9,7 +9,8 @@ const PORT = 9343;
 const here = new URL('.', import.meta.url).pathname;
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-ui-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
-  '--window-size=400,900', '--no-first-run', '--hide-scrollbars', 'about:blank'], { stdio: 'ignore' });
+  '--window-size=400,900', '--no-first-run', '--hide-scrollbars',
+  '--allow-file-access-from-files', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let t;
 for (let i = 0; i < 80; i++) {
@@ -27,6 +28,9 @@ const evaluate = async (e) => (await send('Runtime.evaluate', { expression: e, r
 await send('Page.enable');
 const popup = 'file://' + resolve(here, '..', 'popup.html');
 
+const LANGS = (process.argv[2] || 'ko').split(',');
+for (const lang of LANGS) {
+await send('Emulation.setUserAgentOverride', { userAgent: '', acceptLanguage: lang === 'en' ? 'en-US,en' : 'ko-KR,ko' });
 for (const [scheme, tag] of [['light', 'light'], ['dark', 'dark']]) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
   for (const [hash, state] of [['', 'idle'], ['#notice', 'notice'], ['#done', 'done'], ['#done', 'open']]) {
@@ -41,9 +45,10 @@ for (const [scheme, tag] of [['light', 'light'], ['dark', 'dark']]) {
       format: 'png', captureBeyondViewport: true,
       clip: { x: 0, y: 0, width: w, height: h, scale: 2 },
     });
-    const name = `ui-${tag}-${state}.png`;
+    const name = `ui-${lang}-${tag}-${state}.png`;
     writeFileSync(resolve(here, name), Buffer.from(r.result.data, 'base64'));
     console.log(`${name}  ${w}x${h}`);
   }
+}
 }
 ws.close(); chrome.kill(); process.exit(0);

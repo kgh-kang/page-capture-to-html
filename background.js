@@ -27,12 +27,28 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
   }
 });
 
+// 단축키로 저장하면 팝업이 안 열리므로 결과를 알 길이 없다. 배지로 알린다.
+function badge(text, color) {
+  try {
+    chrome.action.setBadgeText({ text });
+    if (color) chrome.action.setBadgeBackgroundColor({ color });
+    if (text) setTimeout(() => chrome.action.setBadgeText({ text: '' }), 3000);
+  } catch (_) {}
+}
+
 chrome.commands.onCommand.addListener(async (cmd) => {
   if (cmd !== 'capture') return;
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab) return;
-  const { opts } = await chrome.storage.local.get('opts');
-  await capture(tab.id, { ...DEFAULT_OPTS, ...(opts || {}) });
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !/^(https?|file):/.test(tab.url || '')) return badge('!', '#c0392b');
+    badge('…', '#666666');
+    const { opts } = await chrome.storage.local.get('opts');
+    const r = await capture(tab.id, { ...DEFAULT_OPTS, ...(opts || {}) });
+    badge(r && r.ok ? '✓' : '!', r && r.ok ? '#1c7a2e' : '#c0392b');
+  } catch (e) {
+    console.error('[page-capture]', e);
+    badge('!', '#c0392b');
+  }
 });
 
 async function capture(tabId, opts) {
@@ -40,7 +56,13 @@ async function capture(tabId, opts) {
   return chrome.tabs.sendMessage(tabId, { type: 'VSNAP_CAPTURE', opts });
 }
 
+// 스킴 화이트리스트 — 확장이 임의 스킴을 대신 열어주지 않게
+function assertUrl(url) {
+  if (!/^(https?|file|blob|data):/i.test(String(url))) throw new Error('허용되지 않는 주소');
+}
+
 async function fetchBinary(url) {
+  assertUrl(url);
   const res = await fetch(url, { credentials: 'include', cache: 'force-cache' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const buf = new Uint8Array(await res.arrayBuffer());
@@ -50,6 +72,7 @@ async function fetchBinary(url) {
 }
 
 async function fetchText(url) {
+  assertUrl(url);
   const res = await fetch(url, { credentials: 'include', cache: 'force-cache' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return { text: await res.text() };

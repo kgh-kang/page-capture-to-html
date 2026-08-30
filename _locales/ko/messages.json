@@ -1,0 +1,210 @@
+{
+  "extName": {
+    "message": "화면 그대로 HTML 저장"
+  },
+  "extDescription": {
+    "message": "지금 화면에 보이는 것만 HTML 파일 하나로 저장합니다."
+  },
+  "cmdCapture": {
+    "message": "보이는 화면을 HTML 로 저장"
+  },
+  "checking": {
+    "message": "페이지를 확인하는 중…"
+  },
+  "cannotCapture": {
+    "message": "이 페이지는 저장할 수 없어요 (브라우저 내부 화면)"
+  },
+  "needReload": {
+    "message": "페이지를 새로고침한 뒤 다시 열어 주세요"
+  },
+  "viewport": {
+    "message": "$W$ × $H$",
+    "placeholders": {
+      "w": {
+        "content": "$1"
+      },
+      "h": {
+        "content": "$2"
+      }
+    }
+  },
+  "scrolledBy": {
+    "message": " · 아래로 $PX$px 내린 위치",
+    "placeholders": {
+      "px": {
+        "content": "$1"
+      }
+    }
+  },
+  "atTop": {
+    "message": " · 맨 위"
+  },
+  "modeHeading": {
+    "message": "어떻게 저장할까요?"
+  },
+  "modeCrop": {
+    "message": "지금 화면만"
+  },
+  "modeCropDesc": {
+    "message": "파일을 열면 지금 보이는 이 화면이 그대로 나와요"
+  },
+  "modeFull": {
+    "message": "페이지 전체"
+  },
+  "modeFullDesc": {
+    "message": "위아래 전체를 남기되, 화면 밖에 있던 내용은 비워요"
+  },
+  "save": {
+    "message": "화면 저장"
+  },
+  "saving": {
+    "message": "저장하는 중…"
+  },
+  "savingHint": {
+    "message": "큰 페이지는 몇 초 걸려요"
+  },
+  "noticeTitle": {
+    "message": "화면을 가린 안내창이 있어요"
+  },
+  "noticeDesc": {
+    "message": "지금 그대로 저장하면 창에 덮인 부분은 빈칸이 돼요."
+  },
+  "noticeToggle": {
+    "message": "안내창 걷어내고 그 아래 저장하기"
+  },
+  "noticeOnTitle": {
+    "message": "안내창을 걷어내고 저장해요"
+  },
+  "noticeOnDesc": {
+    "message": "저장을 누르면 그 창이 없는 상태로 담겨요."
+  },
+  "advanced": {
+    "message": "자세한 설정"
+  },
+  "optFreeze": {
+    "message": "아무것도 안 눌리게 굳히기"
+  },
+  "optFreezeDesc": {
+    "message": "링크·버튼·입력칸을 전부 끊고 자동 실행 코드도 빼요. 눌러도 아무 일 없는 읽기 전용 파일이 돼요"
+  },
+  "optOverlay": {
+    "message": "덮은 안내창 치우기"
+  },
+  "optOverlayDesc": {
+    "message": "화면을 가린 팝업·배너를 걷어내고 그 아래 내용을 저장해요"
+  },
+  "optOcclusion": {
+    "message": "가려진 글자 빼기"
+  },
+  "optOcclusionDesc": {
+    "message": "팝업이나 배너에 덮여 안 보이던 내용까지 지워요"
+  },
+  "optImages": {
+    "message": "사진 넣기"
+  },
+  "optImagesDesc": {
+    "message": "끄면 파일이 훨씬 가벼워지는 대신 그림이 빈칸이 돼요"
+  },
+  "optFonts": {
+    "message": "글꼴 넣기"
+  },
+  "optFontsDesc": {
+    "message": "끄면 글자 모양과 줄바꿈이 조금 달라질 수 있어요"
+  },
+  "optFrames": {
+    "message": "안쪽 화면도 저장"
+  },
+  "optFramesDesc": {
+    "message": "네이버 블로그처럼 본문을 따로 불러오는 페이지에 필요해요"
+  },
+  "optScroll": {
+    "message": "열 때 보던 위치로"
+  },
+  "optScrollDesc": {
+    "message": "끄면 저장 파일에 자동 실행 코드가 하나도 안 들어가요"
+  },
+  "optScrollOff": {
+    "message": "‘굳히기’를 켜면 자동 실행 코드가 아예 없어서 이 항목은 쓰이지 않아요"
+  },
+  "optPin": {
+    "message": "크기 그대로 고정"
+  },
+  "optPinDesc": {
+    "message": "표·사진을 원본 크기로 못박아요. 끄면 배치가 틀어질 수 있어요"
+  },
+  "savedTitle": {
+    "message": "저장했어요 · $SIZE$",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "savedStats": {
+    "message": "화면에 보이던 곳 $KEPT$군데를 담고, 안 보이던 곳 $HIDDEN$군데는 비웠어요.",
+    "placeholders": {
+      "kept": {
+        "content": "$1"
+      },
+      "hidden": {
+        "content": "$2"
+      }
+    }
+  },
+  "statImages": {
+    "message": "사진 $N$장",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statFonts": {
+    "message": "글꼴 $N$개",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statFrames": {
+    "message": "안쪽 화면 $N$개",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "statOverlays": {
+    "message": "걷어낸 안내창 $N$개",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "whereSaved": {
+    "message": "다운로드 폴더에 있어요. ⌘⇧J 로 바로 열 수 있어요."
+  },
+  "failedTitle": {
+    "message": "저장하지 못했어요"
+  },
+  "errNoTab": {
+    "message": "열려 있는 탭을 찾지 못했어요."
+  },
+  "errNoResponse": {
+    "message": "페이지가 바뀌었어요. 새로고침(⌘R) 뒤 다시 눌러 주세요."
+  },
+  "errChromePage": {
+    "message": "이 화면은 크롬이 직접 그리는 화면이라 저장할 수 없어요."
+  },
+  "errStale": {
+    "message": "확장이 업데이트됐어요. 페이지를 새로고침해 주세요."
+  },
+  "errBusy": {
+    "message": "이미 저장하는 중이에요."
+  },
+  "errUnknown": {
+    "message": "저장 중에 문제가 생겼어요. 새로고침한 뒤 다시 시도해 주세요."
+  }
+}
