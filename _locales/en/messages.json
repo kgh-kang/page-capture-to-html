@@ -52,7 +52,7 @@
     "message": "Whole page"
   },
   "modeFullDesc": {
-    "message": "Keeps the full height, but empties whatever was off-screen"
+    "message": "Captures the page top to bottom. Hidden menus are still left out"
   },
   "save": {
     "message": "Save this screen"
@@ -233,5 +233,8 @@
         "content": "$1"
       }
     }
+  },
+  "modeFullHint": {
+    "message": "makes a bigger file"
   }
 }

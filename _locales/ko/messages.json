@@ -52,7 +52,7 @@
     "message": "페이지 전체"
   },
   "modeFullDesc": {
-    "message": "위아래 전체를 남기되, 화면 밖에 있던 내용은 비워요"
+    "message": "페이지 처음부터 끝까지 담아요. 숨겨진 메뉴는 그대로 빼고요"
   },
   "save": {
     "message": "화면 저장"
@@ -233,5 +233,8 @@
         "content": "$1"
       }
     }
+  },
+  "modeFullHint": {
+    "message": "파일이 커집니다"
   }
 }

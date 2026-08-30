@@ -85,6 +85,16 @@ await evaluate('window.__blobPromise');
 const html = await evaluate('window.__blobText');
 writeFileSync(resolve(here, 'out.html'), html || '');
 
+// '페이지 전체' 로도 한 번 캡처해 화면 밖 내용이 담기는지 본다
+await evaluate('window.__blobText = null; window.__blobPromise = null;', false);
+await evaluate(`
+  new Promise((res) => window.__listener({ type: 'VSNAP_CAPTURE',
+    opts: ${JSON.stringify({ ...opts, crop: false })} }, null, res))
+`);
+await evaluate('window.__blobPromise');
+const whole = await evaluate('window.__blobText');
+writeFileSync(resolve(here, 'out-whole.html'), whole || '');
+
 // 같은 페이지를 '읽기 전용으로 굳히기' 로 한 번 더 캡처해 비교한다
 await evaluate('window.__blobText = null; window.__blobPromise = null;', false);
 await evaluate(`
@@ -122,6 +132,9 @@ const checks = [
   ['pointer-events:none 텍스트 유지', () => html.includes('클릭 안 받는 라벨 텍스트')],
   ['클립 밖 절대배치 글 제거',        () => !html.includes('클립 밖으로 나가 잘린 글')],
   ['static 조상은 절대배치를 안 자름', () => html.includes('클립 조상이 static 이라 안 잘리는 글')],
+  ['페이지 전체: 화면 밖 내용 포함',  () => whole.includes('한참 아래 —')],
+  ['페이지 전체: 숨긴 것은 여전히 제외', () => !whole.includes('display none — 완전히 사라져야 함')],
+  ['지금 화면만: 화면 밖 내용 제외',   () => !html.includes('한참 아래 —')],
   ['크롭 잠금 삽입',                () => html.includes('setProperty("overflow","hidden","important")')],
   ['스크롤 정렬 앵커 기록',          () => html.includes('data-vsa=')],
 ];

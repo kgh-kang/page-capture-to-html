@@ -6,6 +6,7 @@ test/*.png
 test/*-out.html
 test/out.html
 test/out-frozen.html
+test/out-whole.html
 test/fonts/
 test/icon-drafts/
 

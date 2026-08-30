@@ -75,9 +75,10 @@ await evaluate(`
 `, false);
 await evaluate(contentJs + '\n;"injected"', false);
 
-const opts = { crop: true, occlusion: true, pin: true, images: true, fonts: true, frames: true, restoreScroll: true,
-  dropOverlay: (process.argv[5] || '').includes('overlay'),
-  freeze: (process.argv[5] || '').includes('freeze') };
+const flags = process.argv[5] || '';
+const opts = { crop: !flags.includes('full'), occlusion: true, pin: true, images: true, fonts: true, frames: true, restoreScroll: true,
+  dropOverlay: flags.includes('overlay'),
+  freeze: flags.includes('freeze') };
 const t0 = Date.now();
 const result = await evaluate(`new Promise(res => window.__listener({type:'VSNAP_CAPTURE', opts: ${JSON.stringify(opts)}}, null, res))`);
 console.log(tagName, JSON.stringify(result));

@@ -49,7 +49,8 @@ Capture to HTML 은 반대로 갑니다. 버튼을 누른 그 순간 화면에 �
 · 애니메이션, 마우스 올렸을 때 나오는 효과, 원본 페이지의 스크립트
 
 ■ 고를 수 있는 것
-· 지금 화면만 / 페이지 전체
+· 지금 화면만 — 캡처한 그 화면 그대로
+· 페이지 전체 — 처음부터 끝까지. 이때도 숨겨진 메뉴와 안 열린 대화상자는 빠집니다
 · 아무것도 안 눌리게 굳히기 — 링크와 입력을 전부 끊어 읽기 전용 파일로
 · 덮은 안내창 치우기 — 화면을 가린 팝업을 걷어내고 그 아래를 저장
 · 사진·글꼴을 뺄 수 있어 파일을 가볍게 만들 수도 있습니다
@@ -95,7 +96,8 @@ emptied out, and text hidden behind a dialog is not saved.
 · Animations, hover effects, and the original page scripts
 
 ■ Options
-· Just this screen / Whole page
+· Just this screen — exactly what you captured
+· Whole page — top to bottom. Hidden menus and unopened dialogs are still left out
 · Freeze — cuts every link and input so nothing is clickable
 · Remove covering dialogs — takes away the pop-up and saves what was underneath
 · Images and fonts can be left out for a much smaller file

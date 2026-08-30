@@ -229,7 +229,16 @@ function rectOf(dom) {
 async function captureDocument(win, opts, depth) {
   const doc = win.document;
   const gcs = (el, pseudo) => win.getComputedStyle(el, pseudo || null);
+  // 실제 뷰포트. 가림 판정과 덮개 탐지는 언제나 이 기준이다
+  // (화면 밖은 히트테스트가 불가능하다).
   const VP = { l: 0, t: 0, r: win.innerWidth, b: win.innerHeight };
+  // 무엇을 '보이는 것'으로 칠지의 범위. '페이지 전체' 를 고르면 문서 끝까지 넓힌다.
+  const de = doc.documentElement;
+  const SCOPE = opts.crop ? VP : {
+    l: -win.scrollX, t: -win.scrollY,
+    r: -win.scrollX + Math.max(de.scrollWidth, win.innerWidth),
+    b: -win.scrollY + Math.max(de.scrollHeight, win.innerHeight),
+  };
 
   const out = document.implementation.createHTMLDocument('');
   const jobs = [];                 // 비동기 리소스 작업 (DOM 순회가 끝난 뒤 한꺼번에 실행)
@@ -336,9 +345,13 @@ async function captureDocument(win, opts, depth) {
     if (!r) return true;
     const xs = [r.l + (r.r - r.l) * 0.5, r.l + 1.5, r.r - 1.5, r.l + 1.5, r.r - 1.5];
     const ys = [r.t + (r.b - r.t) * 0.5, r.t + 1.5, r.t + 1.5, r.b - 1.5, r.b - 1.5];
+    let checked = 0;
     for (let i = 0; i < xs.length; i++) {
       const x = xs[i], y = ys[i];
+      // 히트테스트는 뷰포트 안에서만 가능하다. '페이지 전체' 모드에서는
+      // 화면 밖 요소가 여기로 오는데, 검사도 못 한 걸 가려졌다고 하면 안 된다.
       if (x < 0 || y < 0 || x > VP.r || y > VP.b) continue;
+      checked++;
       // 위에서부터 훑으며 '실제로 칠하는' 첫 요소를 찾는다.
       const stack = doc.elementsFromPoint(x, y);
       let blocked = false;
@@ -350,7 +363,7 @@ async function captureDocument(win, opts, depth) {
       // 한 지점이라도 뚫려 보이면 보이는 것으로 본다 (거짓 양성 방지)
       if (!blocked) return false;
     }
-    return true;
+    return checked > 0;
   }
 
   // 자기 텍스트나 이미지를 직접 그리는 요소만 가림 판정을 한다.
@@ -593,7 +606,7 @@ async function captureDocument(win, opts, depth) {
     // position:fixed 는 조상 스크롤 컨테이너의 클립에서 벗어난다.
     // absolute 는 자기 컨테이닝 블록까지만 잘린다 — 중간의 overflow:hidden 이
     // static 이면 컨테이닝 블록이 아니므로 그 자손을 자르지 못한다.
-    if (cs.position === 'fixed') clip = VP;
+    if (cs.position === 'fixed') clip = SCOPE;
     else if (cs.position === 'absolute') clip = absClip;
 
     const rect = rectOf(el.getBoundingClientRect());
@@ -951,7 +964,7 @@ async function captureDocument(win, opts, depth) {
   const headOut = out.createElement('head');
   rootOut.appendChild(headOut);
 
-  const bodyOut = (doc.body && build(doc.body, htmlCS, VP, VP, false, false)) || out.createElement('body');
+  const bodyOut = (doc.body && build(doc.body, htmlCS, SCOPE, SCOPE, false, false)) || out.createElement('body');
   rootOut.appendChild(bodyOut);
 
   // 리소스 작업은 여기서 한꺼번에 (동시 실행 수 제한)
