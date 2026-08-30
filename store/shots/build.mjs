@@ -1,7 +1,7 @@
 // 스토어 제출용 이미지(스크린샷 1280x800, 프로모 타일 440x280)를 만든다.
 // 캡처 결과 PNG 를 data URI 로 심고 헤드리스 크롬에서 렌더한다.
-import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -11,6 +11,22 @@ const here = new URL('.', import.meta.url).pathname;
 const ROOT = resolve(here, '..', '..');
 const OUT = resolve(ROOT, 'dist', 'store');
 mkdirSync(OUT, { recursive: true });
+
+// 소재 PNG 는 test/ 가 만들어내는 것이라 저장소에 없다. 없으면 여기서 만든다.
+const NEED = [
+  ['test/wiki-original.png', ['test/live.mjs', 'https://ko.wikipedia.org/wiki/HTML', 'wiki', '600']],
+  ['test/fin-original.png', ['test/live.mjs', 'https://finance.naver.com/', 'fin', '0']],
+  ['test/finx-capture.png', ['test/live.mjs', 'https://finance.naver.com/', 'finx', '0', 'overlay']],
+  ['test/hn-capture.png', ['test/live.mjs', 'https://news.ycombinator.com', 'hn', '0']],
+  ['test/ui-ko-light-idle.png', ['test/uishot.mjs', 'ko,en']],
+];
+for (const [file, cmd] of NEED) {
+  if (existsSync(resolve(ROOT, file))) continue;
+  process.stdout.write(`  소재 생성: ${file} … `);
+  const r = spawnSync('node', cmd, { cwd: ROOT, encoding: 'utf8' });
+  if (r.status !== 0) { console.log('실패'); console.error(r.stderr); process.exit(1); }
+  console.log('완료');
+}
 
 const img = (p) => 'data:image/png;base64,' + readFileSync(resolve(ROOT, p)).toString('base64');
 const font = readFileSync(resolve(ROOT, 'fonts/pretendard-latin.woff2')).toString('base64');
