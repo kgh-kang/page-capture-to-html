@@ -299,14 +299,14 @@ async function init() {
   if (!inExtension) {                       // 브라우저에서 popup.html 을 직접 열었을 때
     paintOptions(); wire();
     const en = document.documentElement.lang === 'en';
-    $('pageTitle').textContent = en ? 'CSS: Cascading Style Sheets | MDN' : '일상 속 상상 : 네이버 블로그';
+    $('pageTitle').textContent = en ? 'HTML - Wikipedia' : 'HTML - 위키백과, 우리 모두의 백과사전';
     $('pageMeta').textContent = t('viewport', 1280, 720) + t('scrolledBy', '600');
     $('shortcutValue').textContent = '⌥⇧S';
     go.disabled = false;
     if (location.hash.includes('notice')) { overlayFound = true; paintNotice(); }
     if (location.hash.includes('done')) {
-      ok({ bytes: 449639, name: en ? 'CSS_ Cascading Style Sheets _ MDN_20260830-151200.html'
-                                    : 'Npay 증권_20260830-151200.html',
+      ok({ bytes: 449639, name: en ? 'HTML - Wikipedia_20260830-151200.html'
+                                    : 'HTML - 위키백과_20260830-151200.html',
            stats: { kept: 238, shells: 766, dropped: 23, images: 2, fonts: 4, frames: 1, overlays: 1 } });
     }
     return;
