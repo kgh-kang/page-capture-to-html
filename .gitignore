@@ -10,3 +10,6 @@ test/fonts/
 test/icon-drafts/
 
 .DS_Store
+
+# 검수용 임시 근거 자료 (재생성 가능)
+test/evidence/
