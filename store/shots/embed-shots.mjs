@@ -10,14 +10,14 @@
 // 브라우저 안에서는 다른 출처의 화면을 그림으로 옮길 수 없다(canvas 가 오염된다).
 // 그래서 크롬을 따로 띄워 찍고, 그 PNG 를 템플릿에 박아 둔다.
 import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9366;
 const here = new URL('.', import.meta.url).pathname;
-const TPL = resolve(here, 'template.html');
+const OUT = resolve(here, 'screens');
 
 // 템플릿의 .viewport 크기 그대로 찍어 1:1 로 들어가게 한다(확대/축소 없음 = 또렷함)
 const W = 1104, H = 482;
@@ -28,7 +28,7 @@ const dark = args.includes('--dark');
 const rest = args.filter((a) => !a.startsWith('--'));
 const asUrl = (v) => (/^(https?|file):/i.test(v) ? v : 'file://' + resolve(process.cwd(), v));
 
-const PAGES = { ko: 'https://ko.wikipedia.org/wiki/HTML', en: 'https://en.wikipedia.org/wiki/HTML' };
+const PAGES = { ko: 'https://www.wikipedia.org/', en: 'https://www.wikipedia.org/' };
 for (const a of rest) {
   const m = a.match(/^(ko|en)=(.+)$/);
   if (m) PAGES[m[1]] = asUrl(m[2]);            // 언어별 지정
@@ -80,13 +80,7 @@ for (const [lang, url] of Object.entries(PAGES)) {
 }
 ws.close(); chrome.kill();
 
-let tpl = readFileSync(TPL, 'utf8');
-const block = 'const SHOT = {\n'
-  + Object.entries(shots).map(([k, v]) => `  ${k}: 'data:image/png;base64,${v}',`).join('\n')
-  + '\n};';
-tpl = /const SHOT = \{[\s\S]*?\n\};/.test(tpl)
-  ? tpl.replace(/const SHOT = \{[\s\S]*?\n\};/, block)
-  : tpl.replace('const ICON =', block + '\n\nconst ICON =');
-writeFileSync(TPL, tpl);
-console.log(`template.html 갱신 · ${(Buffer.byteLength(tpl) / 1024 / 1024).toFixed(2)} MB`);
+mkdirSync(OUT, { recursive: true });
+for (const [lang, b64] of Object.entries(shots)) writeFileSync(resolve(OUT, `${lang}.png`), Buffer.from(b64, 'base64'));
+console.log('screens/ 갱신 — 이어서 `node store/shots/build-template.mjs` 로 템플릿을 만든다');
 process.exit(0);

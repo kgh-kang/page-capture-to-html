@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>Capture to HTML — 스토어 스크린샷 템플릿</title>
+<style>
+  @font-face{font-family:P;src:url(@FONT@) format('woff2');font-weight:100 900}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#22252b;color:#e8eaed;
+    font-family:P,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  /* ── 안내 패널: 캡처할 때는 이 부분을 빼고 캔버스만 찍는다 ── */
+  .guide{max-width:1280px;margin:0 auto;padding:28px 24px 8px}
+  .guide h1{font-size:19px;letter-spacing:-.02em;margin-bottom:10px}
+  .guide ol{margin:0 0 16px 18px;font-size:13.5px;line-height:1.9;color:#b6bcc5}
+  .guide code{background:#31353d;padding:2px 6px;border-radius:4px;font:12.5px ui-monospace,Menlo,monospace}
+  .guide b{color:#ffb27a}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    background:#2b2f36;border:1px solid #3a3f47;border-radius:10px;padding:12px 14px;margin-bottom:26px}
+  .bar label{font-size:13px;color:#b6bcc5;display:flex;align-items:center;gap:6px}
+  .bar input[type=color]{width:34px;height:26px;border:0;background:none;cursor:pointer}
+  .bar button{font:inherit;font-size:13px;padding:6px 12px;border-radius:7px;border:1px solid #4a5059;
+    background:#363b44;color:#e8eaed;cursor:pointer}
+  .bar button:hover{border-color:#ffb27a}
+
+  /* ── 캔버스: 이 요소 하나가 스크린샷 한 장 ── */
+  .sheet{width:1280px;height:800px;margin:0 auto 34px;position:relative;overflow:hidden;
+    background:var(--bg1);display:block}
+  .sheet::before{content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%)}
+  .num{position:absolute;top:-26px;left:0;font:12px ui-monospace,Menlo,monospace;color:#8a919b;
+    display:flex;align-items:center;gap:10px}
+  .save{font:600 11px/1 inherit;padding:4px 10px;border:1px solid #d6dae0;border-radius:6px;
+    background:#fff;color:#37414d;cursor:pointer}
+  .save:hover{border-color:var(--accent1);color:var(--accent1)}
+  .save[disabled]{opacity:.5;cursor:progress}
+
+
+  /* 제품 아이콘과 같은 브래킷 모티프. 아이콘이 HTML 글자를 감싸듯 창을 감싼다 */
+  .brk{position:absolute;border:6px solid var(--accent1);width:58px;height:58px;z-index:5}
+  .brk.tl{left:74px;top:186px;border-right:0;border-bottom:0}
+  .brk.tr{right:74px;top:186px;border-left:0;border-bottom:0}
+  .brk.bl{left:74px;bottom:26px;border-right:0;border-top:0}
+  .brk.br{right:74px;bottom:26px;border-left:0;border-top:0}
+
+  /* 브라우저 창 목업 */
+  .win{position:absolute;left:88px;top:200px;right:88px;bottom:40px;
+    background:#fff;border-radius:12px;overflow:hidden;
+    box-shadow:0 26px 70px rgba(0,0,0,.28)}
+  .chrome{background:#3b3f45;padding:9px 12px 0}
+  .tabs{display:flex;align-items:center;gap:8px}
+  .dots{display:flex;gap:6px;margin-right:6px}
+  .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .tab{display:flex;align-items:center;gap:8px;background:#22252b;color:#e8eaed;
+    padding:8px 14px;border-radius:8px 8px 0 0;font-size:12.5px;max-width:280px}
+  .tab img{width:15px;height:15px;border-radius:3px}
+  .tab span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab .x{opacity:.5;margin-left:2px}
+  .urlbar{display:flex;align-items:center;gap:10px;background:#22252b;padding:8px 12px}
+  .urlbar .nav{display:flex;gap:12px;color:#9aa0aa;font-size:14px}
+  .url{flex:1;background:#33373e;border-radius:14px;padding:5px 12px;font-size:12.5px;color:#cfd3d9}
+  .url b{color:#fff;font-weight:400}
+  .viewport{background:#fff;height:calc(100% - 78px);overflow:hidden;position:relative}
+  .viewport img{width:100%;display:block}
+  .viewport iframe{width:100%;height:100%;border:0;display:block}
+  /* 확장 아이콘을 눌러 팝업이 열린 순간. 창(.win) 은 overflow:hidden 이라
+     팝업이 창 아래로 넘칠 수 있게 시트 기준으로 둔다 — 실제 크롬 팝업도 창 밖으로 나간다. */
+  .ext{position:absolute;right:102px;top:243px;z-index:6;cursor:pointer}
+  .ext.off{display:none}
+  .ext-btn{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.14);
+    display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)}
+  .ext-btn img{width:20px;height:20px;display:block}
+  .ext-pop{position:absolute;top:44px;right:0;width:316px;display:block;
+    border-radius:13px;background:#fff;box-shadow:0 20px 56px rgba(15,23,42,.30),0 2px 8px rgba(15,23,42,.14);
+    transform-origin:top right}
+  /* 저장 전 화면은 등배로 들어간다. 완료 화면은 526px 라 그대로면 1280×800 밖으로 나가 잘린다. */
+  .ext[data-state="done"] .ext-pop{transform:scale(.88)}
+  .drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;color:#9aa0aa;font-size:14px;background:#f4f5f7;border:2px dashed #cfd3d9;text-align:center;line-height:1.6}
+  .drop b{color:#c2410c;font-size:15px}
+
+  /* 화면 안 강조 — 이 제품이 무엇을 잡아내는지 보여주는 장치 */
+  .mark{position:absolute;border:3px solid var(--accent1);border-radius:6px;
+    box-shadow:0 0 0 9999px rgba(255,255,255,.55);pointer-events:none}
+  .mark.on{display:block} .mark.off{display:none}
+  .badge{position:absolute;background:var(--accent1);color:#fff;font-size:13px;font-weight:700;
+    padding:6px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+
+  /* 카피 */
+  .copy{position:absolute;left:88px;top:54px;width:900px;z-index:3}
+  h2{font-size:46px;line-height:1.1;letter-spacing:-.034em;font-weight:800;color:#16181d;text-wrap:balance}
+  h2.light{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.25)}
+  p.sub{margin-top:10px;font-size:19px;line-height:1.45;color:#5f6673;letter-spacing:-.012em}
+  p.sub.light{color:rgba(255,255,255,.9)}
+  [contenteditable]:focus{outline:2px solid #ffb27a;outline-offset:3px;border-radius:3px}
+</style>
+
+<div class="guide">
+  <h1>Capture to HTML — 스토어 스크린샷 템플릿</h1>
+  <ol>
+    <li>창 안에는 <b>위키백과 화면이 이미 들어 있습니다</b>(한국어 시트는 ko, 영어 시트는 en).
+      그대로 저장하면 됩니다. 화면을 갱신하려면 <code>node store/shots/embed-shots.mjs</code>.</li>
+    <li>다른 화면으로 바꾸려면 — <b>PNG 나 저장한 HTML 파일을 끌어다 놓거나</b>,
+      <b>주소창에 URL 을 쓰고 Enter</b> 를 칩니다. 다만 URL 로 띄운 사이트(iframe)는
+      <b><code>PNG 저장</code> 버튼에 담기지 않습니다</b> — 그 시트만 개발자도구로 찍으세요.</li>
+    <li><b>확장 팝업</b>은 툴바 아이콘을 누른 모습으로 04 번 시트에 이미 얹혀 있습니다. 눌러서
+      <b>저장 전 ↔ 저장 완료</b>를 바꾸고, 상단 바 버튼으로 시트마다 켜고 끕니다.
+      영어·다크 모드는 <code>node test/uishot.mjs ko,en</code> 이 만든 PNG 를 팝업 위에 끌어다 놓으면 됩니다.</li>
+    <li>제목·설명·탭 이름·주소·칩은 <b>클릭해서 바로 고칠 수 있습니다.</b></li>
+    <li>강조 사각형은 드래그로 옮기고, 모서리를 끌어 크기를 바꿉니다. 필요 없으면 <code>강조 끄기</code>.</li>
+    <li>다 되면 캡처: 크롬에서 <b>개발자도구 → 해당 <code>.sheet</code> 요소 선택 → ⋮ → Capture node screenshot</b>.
+      정확히 1280×800 으로 저장됩니다. (⌘⇧4 로 찍으면 레티나 때문에 2560×1600 이 되니 주의)</li>
+  </ol>
+  <div class="bar">
+    <label>배경 <input type="color" id="bg1" value="#fff7f2"></label>
+    <label>배경2 <input type="color" id="bg2" value="#ffe4d3"></label>
+    <label>포인트 <input type="color" id="ac1" value="#ea580c"></label>
+    <label>포인트2 <input type="color" id="ac2" value="#c2410c"></label>
+    <button onclick="document.querySelectorAll('.mark').forEach(m=>m.classList.toggle('off'))">강조 켜기/끄기</button>
+    <button onclick="document.querySelectorAll('.brk').forEach(m=>m.style.display=m.style.display==='none'?'':'none')">모서리 장식 켜기/끄기</button>
+    <button onclick="document.querySelectorAll('.ext').forEach(m=>m.classList.toggle('off'))">확장 팝업 켜기/끄기</button>
+    <button onclick="saveAll()"><b>전체 PNG 저장</b></button>
+    <button onclick="shotAll()"><b>전체 화면 그대로</b></button>
+    <button onclick="document.querySelector('.guide').style.display='none'">안내 숨기기</button>
+  </div>
+</div>
+
+<div id="sheets"></div>
+
+<script>
+const SHEETS = [
+  { n:'01', title:'보던 화면을 그대로', sub:'파일을 열면 캡처한 그 순간이 그대로 나옵니다',
+    tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
+    mark:null },
+  { n:'02', title:'가린 창은 걷어내고', sub:'화면을 덮은 안내창을 치우고 그 아래를 저장합니다',
+    tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
+    mark:{x:120,y:90,w:520,h:300} },
+  { n:'03', title:'글자는 글자로 남습니다', sub:'그대로 선택하고 복사하고 검색합니다. 스크린샷은 못 하는 일입니다',
+    tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
+    mark:{x:150,y:150,w:600,h:120} },
+  { n:'04', title:'하나 고르고 저장', sub:'나머지는 알아서 합니다',
+    tab:'위키백과', url:'https://www.wikipedia.org/',
+    mark:null, pop:'idle' },
+  { n:'05', title:'파일 하나면 끝', sub:'이미지도 글꼴도 안에 들어 있어 인터넷 없이 열립니다',
+    tab:'저장한 화면', url:'file:///Users/…/저장한 화면.html',
+    mark:null },
+
+  { n:'E1', lang:'en', title:'The screen, exactly as it was', sub:'Open the file and the moment you captured is still there',
+    tab:'Saved page', url:'file:///Users/…/Saved page.html',
+    mark:null },
+  { n:'E2', lang:'en', title:'Clear what covers it', sub:'Take the dialog away and save what was underneath',
+    tab:'Saved page', url:'file:///Users/…/Saved page.html',
+    mark:{x:120,y:90,w:520,h:300} },
+  { n:'E3', lang:'en', title:'Text stays text', sub:'Select it, copy it, search it. A screenshot cannot do that',
+    tab:'Saved page', url:'file:///Users/…/Saved page.html',
+    mark:{x:150,y:150,w:600,h:120} },
+  { n:'E4', lang:'en', title:'Pick one, press save', sub:'The rest is handled for you',
+    tab:'Wikipedia', url:'https://www.wikipedia.org/',
+    mark:null, pop:'idle' },
+  { n:'E5', lang:'en', title:'One file, nothing else', sub:'Images and web fonts are inside, so it opens without internet',
+    tab:'Saved page', url:'file:///Users/…/Saved page.html',
+    mark:null },
+];
+
+// 팝업 UI 는 test/uishot.mjs 가 popup.html 을 실제로 렌더해 찍은 것이다(2배 해상도).
+const POPUP = @POPUP@;
+
+const SHOT = @SHOT@;
+
+const ICON = 'data:image/png;base64,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';
+
+document.getElementById('sheets').innerHTML = SHEETS.map((s, i) => `
+<div class="sheet" id="sheet${s.n}" data-lang="${s.lang || 'ko'}" data-n="${s.n}">
+  <span class="num">${s.n} · 1280×800 · ${s.lang === 'en' ? 'English' : '한국어'}
+    <button class="save" onclick="savePng(this.closest('.sheet'), '${s.n}')">PNG 저장</button>
+    <button class="save shot" onclick="saveShot(this.closest('.sheet'), '${s.n}')">화면 그대로</button></span>
+  <div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
+  <div class="copy"><h2 contenteditable>${s.title}</h2><p class="sub" contenteditable>${s.sub}</p></div>
+  <div class="win">
+    <div class="chrome">
+      <div class="tabs">
+        <span class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
+        <span class="tab"><img src="${ICON}"><span contenteditable>${s.tab}</span><span class="x">✕</span></span>
+      </div>
+      <div class="urlbar"><span class="nav">←　→　⟳</span>
+        <span class="url" contenteditable>${s.url}</span></div>
+    </div>
+    <div class="viewport" data-i="${i}"><img src="${SHOT[s.lang || 'ko']}" alt=""></div>
+    ${s.mark ? `<div class="mark" style="left:${s.mark.x}px;top:${s.mark.y}px;width:${s.mark.w}px;height:${s.mark.h}px"></div>` : ''}
+  </div>
+  <div class="ext${s.pop ? '' : ' off'}" data-state="${s.pop || 'idle'}">
+    <div class="ext-btn"><img src="${ICON}" alt=""></div>
+    <img class="ext-pop" src="${POPUP[s.lang || 'ko'][s.pop || 'idle']}" alt="">
+  </div>
+
+</div>`).join('');
+
+// 색
+const setVar = (k, v) => document.documentElement.style.setProperty(k, v);
+const sync = () => {
+  setVar('--bg1', bg1.value); setVar('--bg2', bg2.value);
+  setVar('--accent1', ac1.value); setVar('--accent2', ac2.value);
+};
+['bg1','bg2','ac1','ac2'].forEach(id => document.getElementById(id).addEventListener('input', sync));
+sync();
+
+// 이미지 끌어다 놓기
+document.querySelectorAll('.viewport').forEach((vp) => {
+  vp.addEventListener('dragover', (e) => { e.preventDefault(); vp.style.opacity = .7; });
+  vp.addEventListener('dragleave', () => { vp.style.opacity = 1; });
+  vp.addEventListener('drop', (e) => {
+    e.preventDefault(); vp.style.opacity = 1;
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    if (/\.html?$/i.test(f.name) || f.type === 'text/html') {
+      // 확장이 저장한 파일을 그대로 띄운다 — 따로 캡처할 필요가 없다
+      vp.innerHTML = `<iframe src="${URL.createObjectURL(f)}"></iframe>`;
+    } else if (f.type.startsWith('image/')) {
+      const r = new FileReader();
+      r.onload = () => { vp.innerHTML = `<img src="${r.result}">`; };
+      r.readAsDataURL(f);
+    }
+  });
+});
+
+/* ---------- PNG 저장 ----------
+   시트를 SVG foreignObject 에 통째로 넣고 canvas 에 그린다. 개발자도구를 열지 않아도
+   편집한 그대로 정확히 1280×800 PNG 가 떨어진다.
+   한계 하나: 다른 출처의 iframe 은 그림으로 옮겨지지 않는다(브라우저 보안). 사이트 화면까지
+   담아야 하면 그 시트만 개발자도구의 Capture node screenshot 을 쓴다. */
+async function sheetToPng(sheet) {
+  const css = [...document.querySelectorAll('style')].map((n) => n.textContent).join('\n')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const clone = sheet.cloneNode(true);
+  clone.querySelectorAll('.num').forEach((n) => n.remove());   // 번호줄과 저장 버튼은 캔버스 밖
+  clone.removeAttribute('id');
+  clone.style.margin = '0';
+  // 색은 documentElement 의 CSS 변수로 산다. 잘라낸 시트에는 :root 가 따라오지 않으므로
+  // 지금 값을 시트 자신에게 직접 얹어 준다 — 안 그러면 배경도 브래킷도 사라진다.
+  const root = document.documentElement.style;
+  for (const k of ['--bg1', '--bg2', '--accent1', '--accent2'])
+    clone.style.setProperty(k, root.getPropertyValue(k));
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800">'
+    + '<foreignObject x="0" y="0" width="1280" height="800">'
+    + '<div xmlns="http://www.w3.org/1999/xhtml"><style>' + css + '</style>'
+    + new XMLSerializer().serializeToString(clone) + '</div>'
+    + '</foreignObject></svg>';
+  const img = new Image();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = 1280; c.height = 800;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 1280, 800);   // 투명한 곳이 검게 나오지 않도록
+  g.drawImage(img, 0, 0);
+  return toPng24(c);
+}
+
+/* 스토어는 알파 없는 24비트 PNG 만 받는다. canvas.toBlob 은 무조건 32비트 RGBA 를 내므로
+   RGB 만 뽑아 PNG 를 직접 조립한다. 압축은 브라우저의 CompressionStream 이 해준다. */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+const crc32 = (b) => {
+  let c = 0xffffffff;
+  for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+};
+
+async function toPng24(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const rgba = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  // 행마다 필터 바이트를 앞에 두는 게 PNG 규격이다. Up(2) 는 윗줄과의 차이만 남겨
+  // 그라디언트 배경에서 크기를 크게 줄여 준다.
+  const stride = w * 3;
+  const raw = new Uint8Array(h * (1 + stride));
+  const cur = new Uint8Array(stride), prev = new Uint8Array(stride);
+  let p = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0, s = y * w * 4, d = 0; x < w; x++, s += 4) {
+      cur[d++] = rgba[s]; cur[d++] = rgba[s + 1]; cur[d++] = rgba[s + 2];
+    }
+    raw[p++] = 2;
+    for (let i = 0; i < stride; i++) raw[p++] = (cur[i] - prev[i]) & 255;
+    prev.set(cur);
+  }
+  const idat = new Uint8Array(await new Response(
+    new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
+
+  const chunk = (type, data) => {
+    const out = new Uint8Array(12 + data.length);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, data.length);
+    for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+    out.set(data, 8);
+    dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+    return out;
+  };
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, w); dv.setUint32(4, h);
+  ihdr[8] = 8;   // 채널당 8비트
+  ihdr[9] = 2;   // 컬러타입 2 = 트루컬러, 알파 없음
+  return new Blob([
+    new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', new Uint8Array(0)),
+  ], { type: 'image/png' });
+}
+
+/* ---------- 화면 그대로 저장 ----------
+   브라우저가 실제로 그린 픽셀을 화면 공유 API 로 받아 시트 영역만 잘라낸다.
+   canvas 로 옮길 수 없는 iframe 이든 뭐든, 눈에 보이는 대로 담긴다.
+   조건 하나: 시트가 화면 안에 통째로 보여야 한다(브라우저 창이 그만큼 커야 한다). */
+let screenStream = null;
+async function screenGrab() {
+  if (screenStream && screenStream.active) return screenStream;
+  // 제약을 주지 않으면 크롬이 800px 로 줄여서 보낸다. 화면 배율만큼 크게 달라고 해야
+  // 1280×800 에 1:1 이상으로 담긴다.
+  screenStream = await navigator.mediaDevices.getDisplayMedia({
+    video: {
+      frameRate: 30, resizeMode: 'none',
+      width: { ideal: screen.width * devicePixelRatio * 2 },
+      height: { ideal: screen.height * devicePixelRatio * 2 },
+    },
+    audio: false, preferCurrentTab: true,
+  });
+  return screenStream;
+}
+
+async function shotSheet(sheet) {
+  const stream = await screenGrab();
+  const video = document.createElement('video');
+  video.srcObject = stream; video.muted = true;
+  await video.play();
+  sheet.scrollIntoView({ block: 'center' });
+  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  const box = sheet.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  if (box.top < -1 || box.left < -1 || box.bottom > vh + 1 || box.right > vw + 1) {
+    video.srcObject = null;
+    throw new Error('시트가 화면에 다 들어오지 않습니다 — 창을 키우거나 브라우저 확대를 줄여 주세요');
+  }
+  // 캡처 해상도는 화면 배율만큼 크다. 그 비율로 잘라 1280×800 에 맞춘다(레티나면 축소되며 더 또렷해진다)
+  const sx = video.videoWidth / vw, sy = video.videoHeight / vh;
+  const c = document.createElement('canvas');
+  c.width = 1280; c.height = 800;
+  c.getContext('2d').drawImage(video,
+    box.left * sx, box.top * sy, box.width * sx, box.height * sy, 0, 0, 1280, 800);
+  video.pause(); video.srcObject = null;
+  return toPng24(c);
+}
+
+async function saveShot(sheet, name, quiet) {
+  const btn = sheet.querySelector('.shot');
+  btn.disabled = true;
+  try {
+    await download(await shotSheet(sheet), name);
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') alert('담지 못했습니다 — ' + e.message);
+  } finally {
+    btn.disabled = false;
+    if (!quiet && screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
+  }
+}
+
+async function shotAll() {
+  for (const sheet of document.querySelectorAll('.sheet')) {
+    await saveShot(sheet, sheet.dataset.n, true);
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  if (screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
+}
+
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `capture-to-html-${name}.png`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+async function savePng(sheet, name, quiet) {
+  const btn = sheet.querySelector('.save');
+  if (!quiet && sheet.querySelector('.viewport iframe') && !confirm(
+      '이 시트는 창 안에 사이트를 iframe 으로 띄우고 있습니다.\n' +
+      'iframe 은 그림으로 옮겨지지 않아 그 부분이 빈 채로 저장됩니다.\n\n' +
+      '사이트 화면까지 담으려면 개발자도구에서 .sheet 를 고르고\n' +
+      'Capture node screenshot 을 쓰세요. 그래도 저장할까요?')) return;
+  btn.disabled = true;
+  try {
+    download(await sheetToPng(sheet), name);
+  } catch (e) {
+    alert('저장하지 못했습니다 — ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function saveAll() {
+  const sheets = [...document.querySelectorAll('.sheet')];
+  const framed = sheets.filter((x) => x.querySelector('.viewport iframe')).length;
+  if (framed && !confirm(
+      `${framed}장은 창에 사이트를 iframe 으로 띄우고 있어 그 부분이 빈 채로 저장됩니다.\n` +
+      '그 장들은 개발자도구의 Capture node screenshot 을 쓰세요.\n\n계속할까요?')) return;
+  for (const sheet of sheets) {
+    await savePng(sheet, sheet.dataset.n, true);
+    await new Promise((r) => setTimeout(r, 400));   // 연달아 내려받으면 크롬이 뒤엣것을 버린다
+  }
+}
+
+// 팝업을 누르면 저장 전 ↔ 저장 완료 화면이 바뀐다
+const POP_ORDER = ['idle', 'done'];
+document.querySelectorAll('.ext').forEach((ext) => {
+  ext.addEventListener('click', () => {
+    const next = POP_ORDER[(POP_ORDER.indexOf(ext.dataset.state) + 1) % POP_ORDER.length];
+    ext.dataset.state = next;
+    ext.querySelector('.ext-pop').src = POPUP[ext.closest('.sheet').dataset.lang || 'ko'][next];
+  });
+});
+// 다른 언어·다크 모드 팝업은 PNG 를 얹어서 갈아끼운다
+document.querySelectorAll('.ext-pop').forEach((img) => {
+  img.addEventListener('dragover', (e) => e.preventDefault());
+  img.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const f = e.dataTransfer.files[0];
+    if (!f || !f.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = () => { img.src = r.result; };
+    r.readAsDataURL(f);
+  });
+});
+
+// 주소창에 URL 을 쓰고 Enter 치면 그 사이트를 창 안에 띄운다.
+// 위키백과처럼 frame-ancestors 를 걸지 않은 곳만 뜬다 — 막힌 사이트는 빈 화면이 된다.
+document.querySelectorAll('.url').forEach((u) => {
+  u.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    u.blur();
+    const v = u.textContent.trim();
+    if (!/^(https?|file|blob):/i.test(v)) return;
+    u.closest('.win').querySelector('.viewport').innerHTML =
+      `<iframe src="${v.replace(/"/g, '&quot;')}"></iframe>`;
+  });
+});
+
+// 강조 사각형: 드래그로 이동
+document.querySelectorAll('.mark').forEach((m) => {
+  m.style.pointerEvents = 'auto'; m.style.cursor = 'move';
+  m.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    const ox = parseFloat(m.style.left), oy = parseFloat(m.style.top);
+    const move = (ev) => {
+      m.style.left = (ox + ev.clientX - sx) + 'px';
+      m.style.top = (oy + ev.clientY - sy) + 'px';
+    };
+    const up = () => { removeEventListener('mousemove', move); removeEventListener('mouseup', up); };
+    addEventListener('mousemove', move); addEventListener('mouseup', up);
+  });
+});
+</script>
+</html>
