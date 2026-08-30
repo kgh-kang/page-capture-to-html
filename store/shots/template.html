@@ -119,6 +119,7 @@
     <button onclick="document.querySelectorAll('.brk').forEach(m=>m.style.display=m.style.display==='none'?'':'none')">모서리 장식 켜기/끄기</button>
     <button onclick="document.querySelectorAll('.ext').forEach(m=>m.classList.toggle('off'))">확장 팝업 켜기/끄기</button>
     <button onclick="saveAll()"><b>전체 PNG 저장</b></button>
+    <button onclick="shotAll()"><b>전체 화면 그대로</b></button>
     <button onclick="document.querySelector('.guide').style.display='none'">안내 숨기기</button>
   </div>
 </div>
@@ -176,7 +177,8 @@ const ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHL
 document.getElementById('sheets').innerHTML = SHEETS.map((s, i) => `
 <div class="sheet" id="sheet${s.n}" data-lang="${s.lang || 'ko'}" data-n="${s.n}">
   <span class="num">${s.n} · 1280×800 · ${s.lang === 'en' ? 'English' : '한국어'}
-    <button class="save" onclick="savePng(this.closest('.sheet'), '${s.n}')">PNG 저장</button></span>
+    <button class="save" onclick="savePng(this.closest('.sheet'), '${s.n}')">PNG 저장</button>
+    <button class="save shot" onclick="saveShot(this.closest('.sheet'), '${s.n}')">화면 그대로</button></span>
   <div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
   <div class="copy"><h2 contenteditable>${s.title}</h2><p class="sub" contenteditable>${s.sub}</p></div>
   <div class="win">
@@ -316,6 +318,80 @@ async function toPng24(canvas) {
   ], { type: 'image/png' });
 }
 
+/* ---------- 화면 그대로 저장 ----------
+   브라우저가 실제로 그린 픽셀을 화면 공유 API 로 받아 시트 영역만 잘라낸다.
+   canvas 로 옮길 수 없는 iframe 이든 뭐든, 눈에 보이는 대로 담긴다.
+   조건 하나: 시트가 화면 안에 통째로 보여야 한다(브라우저 창이 그만큼 커야 한다). */
+let screenStream = null;
+async function screenGrab() {
+  if (screenStream && screenStream.active) return screenStream;
+  // 제약을 주지 않으면 크롬이 800px 로 줄여서 보낸다. 화면 배율만큼 크게 달라고 해야
+  // 1280×800 에 1:1 이상으로 담긴다.
+  screenStream = await navigator.mediaDevices.getDisplayMedia({
+    video: {
+      frameRate: 30, resizeMode: 'none',
+      width: { ideal: screen.width * devicePixelRatio * 2 },
+      height: { ideal: screen.height * devicePixelRatio * 2 },
+    },
+    audio: false, preferCurrentTab: true,
+  });
+  return screenStream;
+}
+
+async function shotSheet(sheet) {
+  const stream = await screenGrab();
+  const video = document.createElement('video');
+  video.srcObject = stream; video.muted = true;
+  await video.play();
+  sheet.scrollIntoView({ block: 'center' });
+  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  const box = sheet.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  if (box.top < -1 || box.left < -1 || box.bottom > vh + 1 || box.right > vw + 1) {
+    video.srcObject = null;
+    throw new Error('시트가 화면에 다 들어오지 않습니다 — 창을 키우거나 브라우저 확대를 줄여 주세요');
+  }
+  // 캡처 해상도는 화면 배율만큼 크다. 그 비율로 잘라 1280×800 에 맞춘다(레티나면 축소되며 더 또렷해진다)
+  const sx = video.videoWidth / vw, sy = video.videoHeight / vh;
+  const c = document.createElement('canvas');
+  c.width = 1280; c.height = 800;
+  c.getContext('2d').drawImage(video,
+    box.left * sx, box.top * sy, box.width * sx, box.height * sy, 0, 0, 1280, 800);
+  video.pause(); video.srcObject = null;
+  return toPng24(c);
+}
+
+async function saveShot(sheet, name, quiet) {
+  const btn = sheet.querySelector('.shot');
+  btn.disabled = true;
+  try {
+    await download(await shotSheet(sheet), name);
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') alert('담지 못했습니다 — ' + e.message);
+  } finally {
+    btn.disabled = false;
+    if (!quiet && screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
+  }
+}
+
+async function shotAll() {
+  for (const sheet of document.querySelectorAll('.sheet')) {
+    await saveShot(sheet, sheet.dataset.n, true);
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  if (screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
+}
+
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `capture-to-html-${name}.png`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
 async function savePng(sheet, name, quiet) {
   const btn = sheet.querySelector('.save');
   if (!quiet && sheet.querySelector('.viewport iframe') && !confirm(
@@ -325,11 +401,7 @@ async function savePng(sheet, name, quiet) {
       'Capture node screenshot 을 쓰세요. 그래도 저장할까요?')) return;
   btn.disabled = true;
   try {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(await sheetToPng(sheet));
-    a.download = `capture-to-html-${name}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    download(await sheetToPng(sheet), name);
   } catch (e) {
     alert('저장하지 못했습니다 — ' + e.message);
   } finally {
