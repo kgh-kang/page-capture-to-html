@@ -55,6 +55,7 @@
   .url b{color:#fff;font-weight:400}
   .viewport{background:#fff;height:calc(100% - 78px);overflow:hidden;position:relative}
   .viewport img{width:100%;display:block}
+  .viewport iframe{width:100%;height:100%;border:0;display:block}
   .drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:8px;color:#9aa0aa;font-size:14px;background:#f4f5f7;border:2px dashed #cfd3d9;text-align:center;line-height:1.6}
   .drop b{color:#c2410c;font-size:15px}
@@ -81,7 +82,9 @@
 <div class="guide">
   <h1>Capture to HTML — 스토어 스크린샷 템플릿</h1>
   <ol>
-    <li>아래 흰 영역(<code>.viewport</code>)에 <b>캡처한 PNG 를 끌어다 놓으면</b> 브라우저 창 안에 들어갑니다.</li>
+    <li>브라우저 창을 채우는 방법은 셋입니다 —
+      <b>① 주소창에 URL 을 쓰고 Enter</b> (그 사이트가 그대로 뜹니다),
+      <b>② 저장한 HTML 파일을 끌어다 놓기</b>, <b>③ 캡처한 PNG 를 끌어다 놓기</b>.</li>
     <li>제목·설명·탭 이름·주소·칩은 <b>클릭해서 바로 고칠 수 있습니다.</b></li>
     <li>강조 사각형은 드래그로 옮기고, 모서리를 끌어 크기를 바꿉니다. 필요 없으면 <code>강조 끄기</code>.</li>
     <li>다 되면 캡처: 크롬에서 <b>개발자도구 → 해당 <code>.sheet</code> 요소 선택 → ⋮ → Capture node screenshot</b>.
@@ -136,8 +139,8 @@ document.getElementById('sheets').innerHTML = SHEETS.map((s, i) => `
         <span class="url" contenteditable>${s.url}</span></div>
     </div>
     <div class="viewport" data-i="${i}">
-      <div class="drop"><b>여기에 캡처 이미지를 끌어다 놓으세요</b>
-        저장한 HTML 을 연 화면, 또는 팝업 화면</div>
+      <div class="drop"><b>주소창에 URL 을 쓰고 Enter</b>
+        또는 저장한 HTML·캡처 PNG 를 여기에 끌어다 놓으세요</div>
     </div>
     ${s.mark ? `<div class="mark" style="left:${s.mark.x}px;top:${s.mark.y}px;width:${s.mark.w}px;height:${s.mark.h}px"></div>` : ''}
   </div>
@@ -160,10 +163,29 @@ document.querySelectorAll('.viewport').forEach((vp) => {
   vp.addEventListener('drop', (e) => {
     e.preventDefault(); vp.style.opacity = 1;
     const f = e.dataTransfer.files[0];
-    if (!f || !f.type.startsWith('image/')) return;
-    const r = new FileReader();
-    r.onload = () => { vp.innerHTML = `<img src="${r.result}">`; };
-    r.readAsDataURL(f);
+    if (!f) return;
+    if (/\.html?$/i.test(f.name) || f.type === 'text/html') {
+      // 확장이 저장한 파일을 그대로 띄운다 — 따로 캡처할 필요가 없다
+      vp.innerHTML = `<iframe src="${URL.createObjectURL(f)}"></iframe>`;
+    } else if (f.type.startsWith('image/')) {
+      const r = new FileReader();
+      r.onload = () => { vp.innerHTML = `<img src="${r.result}">`; };
+      r.readAsDataURL(f);
+    }
+  });
+});
+
+// 주소창에 URL 을 쓰고 Enter 치면 그 사이트를 창 안에 띄운다.
+// 위키백과처럼 frame-ancestors 를 걸지 않은 곳만 뜬다 — 막힌 사이트는 빈 화면이 된다.
+document.querySelectorAll('.url').forEach((u) => {
+  u.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    u.blur();
+    const v = u.textContent.trim();
+    if (!/^(https?|file|blob):/i.test(v)) return;
+    u.closest('.win').querySelector('.viewport').innerHTML =
+      `<iframe src="${v.replace(/"/g, '&quot;')}"></iframe>`;
   });
 });
 
