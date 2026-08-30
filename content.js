@@ -1,4 +1,4 @@
-/* Page Capture to HTML — content script
+/* Capture to HTML — content script
  *
  * 핵심 아이디어
  *  1) 지금 이 순간의 뷰포트를 기준으로 요소별 "실제로 보이는가"를 판정한다.
@@ -961,7 +961,7 @@ async function captureDocument(win, opts, depth) {
   const p2 = (n) => String(n).padStart(2, '0');
   const stamp = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
     ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
-  const banner = '<!-- Page Capture to HTML | ' + doc.location.href +
+  const banner = '<!-- Capture to HTML | ' + doc.location.href +
     ' | 화면 ' + win.innerWidth + '\u00d7' + win.innerHeight +
     (win.scrollY ? ' · 아래로 ' + Math.round(win.scrollY) + 'px' : '') +
     ' | ' + stamp + ' -->';

@@ -47,6 +47,21 @@ function paintText() {
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
 }
 
+/* ---------- 목록 높이 ---------- */
+
+const POPUP_MAX = 598;   // 크롬 팝업이 허용하는 높이(600px)에서 테두리 몫을 뺀 값
+
+// 헤더·선택·버튼은 고정하고 옵션 목록만 스크롤시킨다. 위쪽 요소들의 높이가
+// 페이지 제목 길이나 배너 유무에 따라 달라지므로 그때그때 다시 잰다.
+function fitOptions() {
+  const adv = $('adv');
+  const opts_ = document.querySelector('.opts');
+  if (!adv.open) { opts_.style.maxHeight = ''; return; }
+  const top = adv.getBoundingClientRect().top;
+  const summary = adv.querySelector('summary').getBoundingClientRect().height;
+  opts_.style.maxHeight = Math.max(120, POPUP_MAX - top - summary - 2) + 'px';
+}
+
 /* ---------- 옵션 상태 ---------- */
 
 function paintMode() {
@@ -65,6 +80,7 @@ function paintOptions() {
   $('opt-scroll').classList.toggle('muted', !!opts.freeze);
   $('scrollWhy').hidden = !opts.freeze;
   paintNotice();
+  fitOptions();
 }
 
 function save() {
@@ -78,6 +94,8 @@ function wire() {
   for (const k of TOGGLES) {
     $(k).addEventListener('change', (e) => { opts[k] = e.target.checked; paintOptions(); save(); });
   }
+  $('adv').addEventListener('toggle', fitOptions);
+  addEventListener('resize', fitOptions);
 }
 
 /* ---------- 덮개 안내 ---------- */
@@ -97,6 +115,7 @@ function paintNotice() {
   $('noticeToggle').addEventListener('change', (e) => {
     opts.dropOverlay = e.target.checked; paintOptions(); save();
   });
+  fitOptions();
 }
 
 /* ---------- 현재 페이지 ---------- */
@@ -123,10 +142,17 @@ async function loadTab() {
 }
 
 async function loadShortcut() {
+  const el = $('shortcutValue');
+  let text = t('shortcutNone');
   try {
     const c = (await chrome.commands.getAll()).find((x) => x.name === 'capture');
-    if (c && c.shortcut) $('shortcut').textContent = c.shortcut;
+    if (c && c.shortcut) text = c.shortcut;
   } catch (_) {}
+  el.textContent = text;
+  // chrome:// 는 링크로 못 열고 탭으로만 열 수 있다
+  $('editShortcut').addEventListener('click', () => {
+    try { chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); } catch (_) {}
+  });
 }
 
 // content.js 를 주입하지 않고 가볍게 덮개만 확인한다.
@@ -192,6 +218,7 @@ function ok(r) {
       <div class="stats">${esc(t('savedStats', nf(s.kept), nf((s.shells || 0) + (s.dropped || 0))))}${
         bits.length ? '<br>' + esc(bits.join(' · ')) : ''}<br>${esc(t('whereSaved'))}</div>
     </div>`;
+  fitOptions();
 }
 
 // 원문 오류는 영문 스택이라 그대로 보여주면 아무 도움이 안 된다.
@@ -207,6 +234,7 @@ function friendly(msg) {
 function fail(msg) {
   result.innerHTML = `<div class="card err"><b>${esc(t('failedTitle'))}</b>
     <div class="stats">${esc(msg)}</div></div>`;
+  fitOptions();
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
@@ -218,7 +246,7 @@ async function capture() {
   go.disabled = true;
   go.setAttribute('aria-busy', 'true');
   const label = go.innerHTML;
-  go.innerHTML = `<span class="spinner"></span>${esc(t('saving'))}<span class="hint">${esc(t('savingHint'))}</span>`;
+  go.innerHTML = `<span class="spinner"></span>${esc(t('saving'))}`;
   result.innerHTML = '';
   try {
     if (!tab) throw new Error(t('errNoTab'));
@@ -248,7 +276,7 @@ async function init() {
     paintOptions(); wire();
     $('pageTitle').textContent = '일상 속 상상 : 네이버 블로그';
     $('pageMeta').textContent = t('viewport', 1280, 720) + t('scrolledBy', '600');
-    $('shortcut').textContent = '⌥⇧S';
+    $('shortcutValue').textContent = '⌥⇧S';
     go.disabled = false;
     if (location.hash.includes('notice')) { overlayFound = true; paintNotice(); }
     if (location.hash.includes('done')) {

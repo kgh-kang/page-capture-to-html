@@ -1,4 +1,4 @@
-# Page Capture to HTML
+# Capture to HTML
 
 지금 화면에 **보이는 것만** 잘라서 단일 HTML 파일로 저장하는 크롬 확장.
 
@@ -170,7 +170,7 @@ node test/render_text.mjs                    # 글자 마스크 재생성 (폰�
 ### 패키지
 
 ```bash
-./scripts/package.sh          # dist/page-capture-to-html-<버전>.zip
+./scripts/package.sh          # dist/capture-to-html-<버전>.zip
 ```
 
 확장이 실제로 쓰는 파일만 담는다. `test/`·`scripts/`·`assets/` 는 개발용이라 빠진다.

@@ -39,7 +39,7 @@ for (const [scheme, tag] of [['light', 'light'], ['dark', 'dark']]) {
     await send('Page.navigate', { url: popup + hash });
     await sleep(700);
     if (state === 'open') { await evaluate('document.getElementById("adv").open = true'); await sleep(250); }
-    const box = await evaluate('JSON.stringify({w: document.body.scrollWidth, h: document.body.scrollHeight})');
+    const box = await evaluate('JSON.stringify({w: document.body.scrollWidth, h: document.body.getBoundingClientRect().height})');
     const { w, h } = JSON.parse(box);
     const r = await send('Page.captureScreenshot', {
       format: 'png', captureBeyondViewport: true,

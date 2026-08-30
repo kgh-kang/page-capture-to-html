@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "Page Capture to HTML"
+    "message": "Capture to HTML"
   },
   "extDescription": {
     "message": "Saves only what you can see right now as a single HTML file."
@@ -206,5 +206,14 @@
   },
   "errUnknown": {
     "message": "Something went wrong while saving. Reload the page and try again."
+  },
+  "shortcutLabel": {
+    "message": "Keyboard shortcut"
+  },
+  "shortcutChange": {
+    "message": "Change"
+  },
+  "shortcutNone": {
+    "message": "Not set"
   }
 }

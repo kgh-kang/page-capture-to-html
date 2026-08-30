@@ -1,4 +1,4 @@
-"""Page Capture to HTML — 아이콘 생성기.
+"""Capture to HTML — 아이콘 생성기.
 
 애플 아이콘 문법을 따른다.
   · 모서리는 원호가 아니라 연속 곡률(초타원 n=5)

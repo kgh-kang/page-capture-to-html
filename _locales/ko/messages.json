@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "화면 그대로 HTML 저장"
+    "message": "Capture to HTML"
   },
   "extDescription": {
     "message": "지금 화면에 보이는 것만 HTML 파일 하나로 저장합니다."
@@ -206,5 +206,14 @@
   },
   "errUnknown": {
     "message": "저장 중에 문제가 생겼어요. 새로고침한 뒤 다시 시도해 주세요."
+  },
+  "shortcutLabel": {
+    "message": "단축키"
+  },
+  "shortcutChange": {
+    "message": "바꾸기"
+  },
+  "shortcutNone": {
+    "message": "지정 안 됨"
   }
 }

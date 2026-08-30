@@ -1,4 +1,4 @@
-// Page Capture to HTML — service worker
+// Capture to HTML — service worker
 // 콘텐츠 스크립트는 MV3에서 교차 출처 fetch 권한이 없으므로,
 // 이미지/폰트/CSS 같은 리소스 다운로드는 전부 여기서 대신 처리한다.
 

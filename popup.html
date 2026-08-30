@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <meta charset="utf-8">
-<title>Page Capture to HTML</title>
+<title>Capture to HTML</title>
 <style>
   /* Pretendard 라틴 서브셋(29KB). 한글은 시스템 폰트에 맡긴다 —
      전체를 넣으면 2MB 라 확장 크기가 감당이 안 된다. */
@@ -35,6 +35,9 @@
   html { width: 316px; }
   body {
     width: 100%; max-height: 598px; margin: 0; padding: 0;
+    /* 넘치는 건 .opts 안에서만 스크롤한다. 여기가 visible 이면
+       내용이 팝업 밖으로 흘러 아무 데서도 스크롤이 안 된다. */
+    overflow: hidden;
     display: flex; flex-direction: column;
     background: var(--bg); color: var(--fg);
     font: 13px/1.5 var(--sans); -webkit-font-smoothing: antialiased;
@@ -67,7 +70,11 @@
         font-weight: 700; font-size: 13px; border: 0; border-radius: 9px;
         background: var(--accent-btn); color: #fff; cursor: pointer; }
   .go:disabled { opacity: .5; cursor: default; }
-  .go .hint { font-weight: 500; font-size: 11px; margin-left: 5px; opacity: .85; }
+  .opt.shortcut { cursor: default; align-items: center; }
+  .opt.shortcut span { font-variant-numeric: tabular-nums; }
+  .link { flex: none; padding: 4px 8px; font: inherit; font-size: 11.5px; color: var(--accent);
+          background: none; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  .link:hover { border-color: var(--accent); }
   .spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px;
              border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%;
              animation: spin .7s linear infinite; }
@@ -90,15 +97,16 @@
   /* 제목만 경고색이고, 안의 스위치 라벨까지 물들면 안 된다 */
   .notice-box .opt b { color: var(--fg); font-size: 12px; font-weight: 500; }
 
-  details { border-top: 1px solid var(--line); margin-top: 13px; min-height: 0;
-            display: flex; flex-direction: column; }
+  /* <details> 에 display:flex 를 줘도 내부 슬롯 구조 탓에 자식이 축소되지 않고
+     삐져나온다. 그래서 목록 높이는 popup.js 의 fitOptions() 가 직접 잰다. */
+  details { border-top: 1px solid var(--line); margin-top: 13px; flex: none; }
   summary { flex: none; padding: 11px 15px; font-size: 12px; color: var(--dim); cursor: pointer;
             list-style: none; display: flex; align-items: center; gap: 5px; user-select: none; }
   summary::-webkit-details-marker { display: none; }
   summary .arrow { transition: transform .15s; }
   details[open] summary .arrow { transform: rotate(90deg); }
   /* 펼쳐도 헤더·선택·버튼은 그대로 두고 옵션만 스크롤한다 */
-  .opts { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 15px 13px; }
+  .opts { overflow-y: auto; overscroll-behavior: contain; padding: 0 15px 13px; }
 
   .opt { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; cursor: pointer; }
   .opt + .opt { border-top: 1px solid var(--line); }
@@ -123,7 +131,7 @@
 <header>
   <div class="brand">
     <img src="icons/icon32.png" width="16" height="16" alt="" aria-hidden="true">
-    <span lang="en">Page Capture to HTML</span>
+    <span lang="en">Capture to HTML</span>
   </div>
   <div class="page" id="pageTitle" data-i18n="checking"></div>
   <div class="meta" id="pageMeta"></div>
@@ -141,7 +149,7 @@
       <b data-i18n="modeFull"></b><span data-i18n="modeFullDesc"></span>
     </label>
   </div>
-  <button class="go" id="go" disabled><span id="goLabel" data-i18n="save"></span><span class="hint" id="shortcut"></span></button>
+  <button class="go" id="go" disabled data-i18n="save"></button>
 </div>
 
 <div id="notice" role="status" aria-live="polite"></div>
@@ -167,6 +175,10 @@
         <span class="why" id="scrollWhy" data-i18n="optScrollOff" hidden></span></span></label>
     <label class="opt"><span class="sw"><input type="checkbox" id="pin"><i></i></span>
       <span class="txt"><b data-i18n="optPin"></b><span data-i18n="optPinDesc"></span></span></label>
+    <div class="opt shortcut">
+      <span class="txt"><b data-i18n="shortcutLabel"></b><span id="shortcutValue"></span></span>
+      <button type="button" class="link" id="editShortcut" data-i18n="shortcutChange"></button>
+    </div>
   </div>
 </details>
 

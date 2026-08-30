@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 version=$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")
-out="dist/page-capture-to-html-${version}.zip"
+out="dist/capture-to-html-${version}.zip"
 
 mkdir -p dist
 rm -f "$out"
