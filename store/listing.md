@@ -110,7 +110,14 @@ and no personal data is kept.
 서비스 워커가 대신 받아옵니다. 사용자가 어떤 페이지를 저장할지 미리 알 수 없으므로
 특정 도메인 목록으로 좁힐 수 없습니다.
 
-받아온 데이터는 저장 파일에 embed 될 뿐, 어떤 서버로도 전송되지 않습니다.
+activeTab 으로는 대체할 수 없습니다. activeTab 은 사용자가 조작한 탭의 주소(origin)에
+한해 권한을 주므로, 그 페이지가 불러오는 다른 도메인의 이미지와 글꼴에는 접근하지
+못합니다. 그 경우 저장한 파일에서 이미지가 비고, 인터넷 없이 열린다는 이 확장의
+핵심 기능이 성립하지 않습니다.
+
+동작 시점은 activeTab 과 같습니다. 사용자가 툴바 버튼이나 단축키를 누른 그 순간,
+그 탭에서만 실행되며 배경에서 페이지를 읽지 않습니다. 받아온 데이터는 저장 파일에
+embed 될 뿐 어떤 서버로도 전송되지 않습니다.
 
 To make a saved HTML file self-contained, the images and web fonts a page references
 must be embedded in it. Those almost always live on different domains (image CDNs, font
@@ -118,7 +125,14 @@ servers). Under Manifest V3 a content script cannot make cross-origin requests, 
 service worker fetches them instead. Since the user may capture any page, the set of
 domains cannot be known in advance and cannot be narrowed to a fixed list.
 
-Fetched data is embedded into the saved file and is never sent to any server.
+activeTab is not a workable substitute. It grants access only to the origin of the tab the
+user acted on, so the images and fonts the page pulls from other domains stay out of reach.
+The saved file would then open with missing images, which defeats the extension's core
+promise of a file that opens without internet.
+
+The timing matches activeTab regardless: the extension runs only in the tab where the user
+pressed the toolbar button or the shortcut, at that moment, and never reads pages in the
+background. Fetched data is embedded into the saved file and is never sent to any server.
 ```
 
 ### 원격 코드 사용
