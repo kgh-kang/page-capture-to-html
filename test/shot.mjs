@@ -12,7 +12,7 @@ const targets = process.argv.slice(2);
 
 const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
-  '--window-size=1000,700', '--no-first-run', '--no-default-browser-check',
+  '--window-size=1400,1000', '--no-first-run', '--no-default-browser-check',
   '--allow-file-access-from-files', '--hide-scrollbars', 'about:blank',
 ], { stdio: 'ignore' });
 
