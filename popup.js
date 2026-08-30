@@ -5,6 +5,9 @@ const DEFAULTS = {
 };
 const TOGGLES = ['freeze', 'dropOverlay', 'occlusion', 'images', 'fonts', 'frames', 'restoreScroll', 'pin'];
 const CAPTURABLE = /^(https?|file):/;
+const MAC = /mac/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '');
+const KEY_DOWNLOADS = MAC ? '⌘⇧J' : 'Ctrl+J';
+const KEY_RELOAD = MAC ? '⌘R' : 'Ctrl+R';
 
 const $ = (id) => document.getElementById(id);
 const go = $('go');
@@ -55,11 +58,26 @@ const POPUP_MAX = 598;   // 크롬 팝업이 허용하는 높이(600px)에서 �
 // 페이지 제목 길이나 배너 유무에 따라 달라지므로 그때그때 다시 잰다.
 function fitOptions() {
   const adv = $('adv');
-  const opts_ = document.querySelector('.opts');
-  if (!adv.open) { opts_.style.maxHeight = ''; return; }
-  const top = adv.getBoundingClientRect().top;
+  const box = document.querySelector('.opts');
+  if (!adv.open) {
+    box.style.maxHeight = '';
+    document.body.style.overflowY = 'hidden';
+    return;
+  }
+  const top = adv.getBoundingClientRect().top + document.documentElement.scrollTop;
   const summary = adv.querySelector('summary').getBoundingClientRect().height;
-  opts_.style.maxHeight = Math.max(120, POPUP_MAX - top - summary - 2) + 'px';
+  const room = POPUP_MAX - top - summary - 2;
+  if (room >= 140) {
+    // 헤더·선택·버튼은 고정하고 목록만 스크롤
+    box.style.maxHeight = room + 'px';
+    document.body.style.overflowY = 'hidden';
+  } else {
+    // 배너와 결과가 겹쳐 자리가 없으면 팝업 전체를 스크롤한다.
+    // 하한을 두면 목록 상자 자체가 팝업 밖으로 나가 마지막 항목에 닿을 수 없다.
+    box.style.maxHeight = '';
+    document.body.style.overflowY = 'auto';
+    adv.scrollIntoView({ block: 'start' });
+  }
 }
 
 /* ---------- 옵션 상태 ---------- */
@@ -69,6 +87,7 @@ function paintMode() {
   $('c-full').classList.toggle('on', !opts.crop);
   $('c-crop').querySelector('input').checked = opts.crop;
   $('c-full').querySelector('input').checked = !opts.crop;
+  go.textContent = t(opts.crop ? 'save' : 'saveFull');
 }
 
 function paintOptions() {
@@ -101,7 +120,9 @@ function wire() {
 /* ---------- 덮개 안내 ---------- */
 
 function paintNotice() {
-  if (!overlayFound) { notice.innerHTML = ''; return; }
+  // 저장이 끝났으면 덮개 경고는 역할을 다했다. 둘이 같이 떠 있으면
+  // 팝업 598px 안에 옵션 목록 자리가 남지 않는다.
+  if (!overlayFound || result.innerHTML) { notice.innerHTML = ''; return; }
   const on = !!opts.dropOverlay;
   notice.innerHTML = `
     <div class="notice-box">
@@ -211,20 +232,22 @@ function ok(r) {
   if (s.fonts) bits.push(t('statFonts', nf(s.fonts)));
   if (s.frames) bits.push(t('statFrames', nf(s.frames)));
   if (s.overlays) bits.push(t('statOverlays', nf(s.overlays)));
+  if (s.imagesFailed) bits.push(t('statImagesFailed', nf(s.imagesFailed)));
   result.innerHTML = `
     <div class="card ok">
       <b>${esc(t('savedTitle', size(r.bytes)))}</b>
       <div class="file">${esc(r.name)}</div>
       <div class="stats">${esc(t('savedStats', nf(s.kept), nf((s.shells || 0) + (s.dropped || 0))))}${
-        bits.length ? '<br>' + esc(bits.join(' · ')) : ''}<br>${esc(t('whereSaved'))}</div>
+        bits.length ? '<br>' + esc(bits.join(' · ')) : ''}<br>${esc(t('whereSaved', KEY_DOWNLOADS))}</div>
     </div>`;
+  paintNotice();
   fitOptions();
 }
 
 // 원문 오류는 영문 스택이라 그대로 보여주면 아무 도움이 안 된다.
 function friendly(msg) {
   const m = String(msg || '');
-  if (/Receiving end does not exist|Could not establish|message port closed/i.test(m)) return t('errNoResponse');
+  if (/Receiving end does not exist|Could not establish|message port closed/i.test(m)) return t('errNoResponse', KEY_RELOAD);
   if (/Cannot access|chrome:\/\/|extension:\/\//i.test(m)) return t('errChromePage');
   if (/Extension context invalidated/i.test(m)) return t('errStale');
   if (m === t('errBusy') || /이미 저장하는 중|already running/i.test(m)) return t('errBusy');
@@ -234,6 +257,7 @@ function friendly(msg) {
 function fail(msg) {
   result.innerHTML = `<div class="card err"><b>${esc(t('failedTitle'))}</b>
     <div class="stats">${esc(msg)}</div></div>`;
+  paintNotice();
   fitOptions();
 }
 
@@ -274,13 +298,15 @@ async function init() {
   const inExtension = typeof chrome !== 'undefined' && chrome.storage && chrome.tabs;
   if (!inExtension) {                       // 브라우저에서 popup.html 을 직접 열었을 때
     paintOptions(); wire();
-    $('pageTitle').textContent = '일상 속 상상 : 네이버 블로그';
+    const en = document.documentElement.lang === 'en';
+    $('pageTitle').textContent = en ? 'CSS: Cascading Style Sheets | MDN' : '일상 속 상상 : 네이버 블로그';
     $('pageMeta').textContent = t('viewport', 1280, 720) + t('scrolledBy', '600');
     $('shortcutValue').textContent = '⌥⇧S';
     go.disabled = false;
     if (location.hash.includes('notice')) { overlayFound = true; paintNotice(); }
     if (location.hash.includes('done')) {
-      ok({ bytes: 449639, name: 'Npay 증권_20260829-125953.html',
+      ok({ bytes: 449639, name: en ? 'CSS_ Cascading Style Sheets _ MDN_20260830-151200.html'
+                                    : 'Npay 증권_20260830-151200.html',
            stats: { kept: 238, shells: 766, dropped: 23, images: 2, fonts: 4, frames: 1, overlays: 1 } });
     }
     return;

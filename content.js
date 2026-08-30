@@ -94,10 +94,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, respond) => {
 
 const resCache = new Map();
 
-function ask(message) {
+function ask(message, timeout = 10000) {
+  // 서비스 워커가 잠들거나 호스트가 응답을 안 하면 콜백이 영영 안 온다.
+  // 그러면 runPool 이 안 끝나고 busy 플래그가 잠긴 채로 남는다.
   return new Promise((res) => {
-    try { chrome.runtime.sendMessage(message, (r) => { void chrome.runtime.lastError; res(r); }); }
-    catch (_) { res(null); }
+    let done = false;
+    const finish = (v) => { if (!done) { done = true; res(v); } };
+    setTimeout(() => finish(null), timeout);
+    try { chrome.runtime.sendMessage(message, (r) => { void chrome.runtime.lastError; finish(r); }); }
+    catch (_) { finish(null); }
   });
 }
 
@@ -233,7 +238,7 @@ async function captureDocument(win, opts, depth) {
   const scrollTargets = [];        // 내부 스크롤 위치를 복원할 노드
   const usedFamilies = new Set();
   const anchors = [];  // 스크롤 정렬 기준점 후보 { node, top, area }
-  const stats = { kept: 0, shells: 0, dropped: 0, images: 0, fonts: 0, frames: 0, overlays: 0 };
+  const stats = { kept: 0, shells: 0, dropped: 0, images: 0, imagesFailed: 0, fonts: 0, frames: 0, overlays: 0 };
 
   /* --- 화면을 덮은 팝업 골라내기 --- */
 
@@ -575,7 +580,7 @@ async function captureDocument(win, opts, depth) {
     return Array.from(el.childNodes);
   }
 
-  function build(el, parentCS, clip, absClip, hidden) {
+  function build(el, parentCS, clip, absClip, hidden, straddle) {
     const tag = el.tagName;
     if (DROP_TAGS.has(tag)) return null;
 
@@ -592,7 +597,10 @@ async function captureDocument(win, opts, depth) {
     else if (cs.position === 'absolute') clip = absClip;
 
     const rect = rectOf(el.getBoundingClientRect());
-    const vis = visible(el, cs, rect, clip, hidden);
+    // 뷰포트 위쪽에 걸친 블록 안에서 인라인 자식을 비우면 텍스트가 짧아지고,
+    // 그만큼 보이던 아래쪽 줄이 화면 밖으로 밀려 올라가 사라진다.
+    const inlineInStraddle = straddle && cs.display.startsWith('inline');
+    const vis = inlineInStraddle ? !hidden : visible(el, cs, rect, clip, hidden);
     // opacity 는 상속되지 않지만 시각적으로는 조상이 0이면 자손도 전부 안 보인다.
     const childHidden = hidden || parseFloat(cs.opacity) === 0 || cs.contentVisibility === 'hidden';
 
@@ -603,6 +611,7 @@ async function captureDocument(win, opts, depth) {
       const clone = out.importNode(el, true);
       clone.removeAttribute('style');
       registerStyle(clone, el, cs, parentCS, 'svg', false);
+      paintSvgDescendants(el, clone, cs);
       jobs.push(async () => { await inlineSvgRefs(clone); });
       return clone;
     }
@@ -612,6 +621,12 @@ async function captureDocument(win, opts, depth) {
       childClip = intersect(clip, rect) || { l: 0, t: 0, r: 0, b: 0 };
     }
     // 이 요소가 absolute 자손의 컨테이닝 블록이 되는가
+    // 문단 하나 안에서만 유효하다. 인라인 사슬을 따라서만 전파하고 블록을 만나면
+    // 다시 판정한다 — 안 그러면 스크롤된 문서는 body 부터 걸쳐 있어 전체가 대상이 된다.
+    const holdsText = !cs.display.startsWith('inline') &&
+      Array.prototype.some.call(el.childNodes, (n) => n.nodeType === 3 && n.data.trim());
+    const childStraddle = (straddle && cs.display.startsWith('inline')) ||
+      (holdsText && rect.t < 0 && rect.b > 0);
     const makesCB = cs.position !== 'static' || cs.transform !== 'none' ||
       cs.filter !== 'none' || cs.perspective !== 'none' ||
       (cs.contain || '').includes('paint') || (cs.willChange || '').includes('transform');
@@ -622,7 +637,7 @@ async function captureDocument(win, opts, depth) {
       if (n.nodeType === 3) {
         if (vis && n.data) kids.push(out.createTextNode(n.data));
       } else if (n.nodeType === 1) {
-        const b = build(n, cs, childClip, childAbsClip, childHidden);
+        const b = build(n, cs, childClip, childAbsClip, childHidden, childStraddle);
         if (b) kids.push(b);
       }
     }
@@ -658,6 +673,13 @@ async function captureDocument(win, opts, depth) {
 
   function shellNode(el, cs, parentCS, tag) {
     const node = out.createElement(tag.toLowerCase());
+    // 열을 몇 칸 차지하는지는 CSS 로 재현되지 않는다. 내용을 비운 껍데기여도
+    // 이 셋은 남겨야 표의 열 좌표가 유지된다.
+    for (const a of ['colspan', 'rowspan', 'span']) {
+      if (el.hasAttribute && el.hasAttribute(a)) {
+        try { node.setAttribute(a, el.getAttribute(a)); } catch (_) {}
+      }
+    }
     if (tag === 'IMG' || tag === 'IFRAME' || tag === 'OBJECT') node.setAttribute('alt', '');
     registerStyle(node, el, cs, parentCS, tag, true);
     return node;
@@ -696,7 +718,8 @@ async function captureDocument(win, opts, depth) {
       jobs.push(async () => {
         const d = await toDataURL(src);
         if (d) { node.setAttribute('src', d); stats.images++; }
-        else { node.removeAttribute('src'); node.setAttribute('alt', ''); }
+        // 못 담은 건 조용히 사라지게 두지 않는다. 결과 카드가 개수를 알려준다.
+        else { node.removeAttribute('src'); node.setAttribute('alt', ''); stats.imagesFailed++; }
       });
       return;
     }
@@ -770,13 +793,41 @@ async function captureDocument(win, opts, depth) {
             const sub = await captureDocument(inner, opts, depth + 1);
             node.setAttribute('srcdoc', sub.html);
             stats.frames++;
-            for (const k of ['kept', 'shells', 'dropped', 'images', 'fonts', 'overlays', 'frames']) {
+            for (const k of ['kept', 'shells', 'dropped', 'images', 'imagesFailed', 'fonts', 'overlays', 'frames']) {
               stats[k] += sub.stats[k] || 0;
             }
           } catch (_) { /* 실패하면 빈 프레임 */ }
         });
       }
       return;
+    }
+  }
+
+  // SVG 는 통째로 복제하므로 자손이 스타일 diff 를 못 거친다. 클래스로 색을 주는
+  // 로고가 기본 검정으로 나오는 자리다. 칠에 관여하는 속성만 부모와 비교해 옮긴다.
+  const SVG_PAINT = ['fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width',
+    'stroke-opacity', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray',
+    'opacity', 'display', 'visibility'];
+
+  function paintSvgDescendants(srcRoot, dstRoot, rootCS) {
+    let src, dst;
+    try {
+      src = srcRoot.querySelectorAll('*');
+      dst = dstRoot.querySelectorAll('*');
+    } catch (_) { return; }
+    if (src.length !== dst.length) return;          // 구조가 어긋나면 건드리지 않는다
+    for (let i = 0; i < src.length; i++) {
+      let scs, pcs;
+      try {
+        scs = gcs(src[i]);
+        pcs = src[i].parentElement ? gcs(src[i].parentElement) : rootCS;
+      } catch (_) { continue; }
+      const parts = [];
+      for (const p of SVG_PAINT) {
+        const v = scs.getPropertyValue(p);
+        if (v && v !== pcs.getPropertyValue(p)) parts.push(p + ':' + v);
+      }
+      if (parts.length) styleTargets.push({ node: dst[i], parts });
     }
   }
 
@@ -813,7 +864,10 @@ async function captureDocument(win, opts, depth) {
     const keys = new Set();
     try {
       for (const f of doc.fonts) {
-        if (f.status === 'loaded') keys.add(normFamily(f.family) + '|' + normWeight(f.weight));
+        if (f.status !== 'loaded') continue;
+        keys.add([normFamily(f.family), normWeight(f.weight),
+                  (f.style || 'normal').trim().toLowerCase(),
+                  (f.unicodeRange || '').replace(/\s+/g, '')].join('|'));
       }
     } catch (_) { /* 접근 불가 */ }
     return keys;
@@ -843,7 +897,9 @@ async function captureDocument(win, opts, depth) {
         const fam = rule.style.getPropertyValue('font-family');
         if (!fam) return;
         const name = normFamily(fam);
-        const key = name + '|' + normWeight(rule.style.getPropertyValue('font-weight'));
+        const key = [name, normWeight(rule.style.getPropertyValue('font-weight')),
+                     (rule.style.getPropertyValue('font-style') || 'normal').trim().toLowerCase(),
+                     (rule.style.getPropertyValue('unicode-range') || '').replace(/\s+/g, '')].join('|');
         const keep = loaded.size ? loaded.has(key) : usedFamilies.has(name);
         if (!keep) return;
         rules.push({ rule, base: sheet.href || doc.baseURI });
@@ -895,7 +951,7 @@ async function captureDocument(win, opts, depth) {
   const headOut = out.createElement('head');
   rootOut.appendChild(headOut);
 
-  const bodyOut = doc.body ? build(doc.body, htmlCS, VP, VP, false) : out.createElement('body');
+  const bodyOut = (doc.body && build(doc.body, htmlCS, VP, VP, false, false)) || out.createElement('body');
   rootOut.appendChild(bodyOut);
 
   // 리소스 작업은 여기서 한꺼번에 (동시 실행 수 제한)
@@ -927,9 +983,11 @@ async function captureDocument(win, opts, depth) {
   const head = [];
   head.push('<meta charset="utf-8">');
   head.push('<title>' + esc(doc.title || doc.location.href) + '</title>');
-  head.push('<style>' + fontCss.join('\n') + '\n' +
-    cropCss(win, opts, depth) + '\n' +
-    cssRules.join('\n') + '</style>');
+  // content:"</style><script>…" 같은 선언이 저장 파일에서 style 을 끊고
+  // 뒤를 마크업으로 만들 수 있다. '원본 스크립트는 빠진다'는 약속이 깨지는 자리다.
+  const styleText = (fontCss.join('\n') + '\n' + cropCss(win, opts, depth) + '\n' +
+    cssRules.join('\n')).replace(/<\/(?=style|script)/gi, '<\\/');
+  head.push('<style>' + styleText + '</style>');
   headOut.innerHTML = head.join('\n');
 
   let tail = '';
@@ -962,8 +1020,8 @@ async function captureDocument(win, opts, depth) {
   const stamp = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
     ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
   const banner = '<!-- Capture to HTML | ' + doc.location.href +
-    ' | 화면 ' + win.innerWidth + '\u00d7' + win.innerHeight +
-    (win.scrollY ? ' · 아래로 ' + Math.round(win.scrollY) + 'px' : '') +
+    ' | ' + win.innerWidth + '\u00d7' + win.innerHeight +
+    (win.scrollY ? ' @' + Math.round(win.scrollY) : '') +
     ' | ' + stamp + ' -->';
 
   return { html: '<!DOCTYPE html>\n' + banner + '\n' + rootOut.outerHTML, stats };
@@ -1033,7 +1091,10 @@ async function main(opts) {
   const t0 = performance.now();
   openSandbox();
   try {
-    const { html, stats } = await captureDocument(window, opts, 0);
+    const { html, stats } = await Promise.race([
+      captureDocument(window, opts, 0),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('capture timed out')), 60000)),
+    ]);
     const name = filename(document.title);
     download(html, name);
     return {

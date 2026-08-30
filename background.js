@@ -63,7 +63,8 @@ function assertUrl(url) {
 
 async function fetchBinary(url) {
   assertUrl(url);
-  const res = await fetch(url, { credentials: 'include', cache: 'force-cache' });
+  const res = await fetch(url, { credentials: 'include', cache: 'force-cache',
+                                 signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_BYTES) throw new Error('too large: ' + buf.length);
@@ -73,7 +74,8 @@ async function fetchBinary(url) {
 
 async function fetchText(url) {
   assertUrl(url);
-  const res = await fetch(url, { credentials: 'include', cache: 'force-cache' });
+  const res = await fetch(url, { credentials: 'include', cache: 'force-cache',
+                                 signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return { text: await res.text() };
 }

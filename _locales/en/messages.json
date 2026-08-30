@@ -60,14 +60,11 @@
   "saving": {
     "message": "Saving…"
   },
-  "savingHint": {
-    "message": "large pages take a few seconds"
-  },
   "noticeTitle": {
     "message": "Something is covering the page"
   },
   "noticeDesc": {
-    "message": "Saved as-is, whatever the dialog covers will come out blank."
+    "message": "If you save it as-is, the area behind the dialog comes out blank."
   },
   "noticeToggle": {
     "message": "Remove it and save what's underneath"
@@ -109,13 +106,13 @@
     "message": "Include fonts"
   },
   "optFontsDesc": {
-    "message": "Turn off and letter shapes and line breaks may shift slightly"
+    "message": "Turn off and letter shapes may shift, changing where lines break"
   },
   "optFrames": {
     "message": "Capture inner frames"
   },
   "optFramesDesc": {
-    "message": "Needed for pages that load their body separately, like Naver Blog"
+    "message": "Needed for pages that load their body in a separate frame"
   },
   "optScroll": {
     "message": "Restore scroll position"
@@ -141,7 +138,7 @@
     }
   },
   "savedStats": {
-    "message": "Kept $KEPT$ visible spots and emptied $HIDDEN$ hidden ones.",
+    "message": "Kept $KEPT$ visible elements, emptied $HIDDEN$ hidden ones.",
     "placeholders": {
       "kept": {
         "content": "$1"
@@ -152,7 +149,7 @@
     }
   },
   "statImages": {
-    "message": "$N$ images",
+    "message": "images: $N$",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -160,7 +157,7 @@
     }
   },
   "statFonts": {
-    "message": "$N$ fonts",
+    "message": "fonts: $N$",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -168,7 +165,7 @@
     }
   },
   "statFrames": {
-    "message": "$N$ inner frames",
+    "message": "inner frames: $N$",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -176,7 +173,7 @@
     }
   },
   "statOverlays": {
-    "message": "$N$ dialogs removed",
+    "message": "dialogs removed: $N$",
     "placeholders": {
       "n": {
         "content": "$1"
@@ -184,7 +181,12 @@
     }
   },
   "whereSaved": {
-    "message": "It's in your Downloads folder. Press ⌘⇧J to open it."
+    "message": "It's in your Downloads folder. Press $KEY$ to open it.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "failedTitle": {
     "message": "Couldn't save"
@@ -193,7 +195,12 @@
     "message": "No open tab found."
   },
   "errNoResponse": {
-    "message": "The page changed. Reload it (⌘R) and try again."
+    "message": "The page changed. Reload it ($KEY$) and try again.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "errChromePage": {
     "message": "This is a screen Chrome draws itself, so it can't be saved."
@@ -215,5 +222,16 @@
   },
   "shortcutNone": {
     "message": "Not set"
+  },
+  "saveFull": {
+    "message": "Save whole page"
+  },
+  "statImagesFailed": {
+    "message": "images not saved: $N$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

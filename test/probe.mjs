@@ -22,7 +22,14 @@ await new Promise((r) => (ws.onopen = r));
 let id = 0; const pending = new Map();
 ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); } };
 const send = (m, p = {}) => { const i = ++id; ws.send(JSON.stringify({ id: i, method: m, params: p })); return new Promise((r) => pending.set(i, r)); };
-await sleep(5000);
+// 세 번째 인자로 뷰포트를 강제할 수 있다 (예: 316x598 — 실제 크롬 팝업 크기)
+const vp = process.argv[4];
+if (vp) {
+  const [w, h] = vp.split('x').map(Number);
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: w, height: h, deviceScaleFactor: 1, mobile: false });
+}
+await sleep(vp ? 1200 : 5000);
 const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
 const res = r.result;
 console.log(res.exceptionDetails ? JSON.stringify(res.exceptionDetails.exception) : res.result.value);

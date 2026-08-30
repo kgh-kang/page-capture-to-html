@@ -58,8 +58,9 @@ Capture to HTML 은 반대로 갑니다. 버튼을 누른 그 순간 화면에 �
 아무것도 수집하지 않습니다. 분석 도구도 추적기도 없고, 어떤 서버로도 데이터를 보내지
 않습니다. 모든 처리가 사용자의 컴퓨터 안에서 끝납니다.
 
-다만 저장된 파일에는 캡처 당시 화면 내용이 그대로 담깁니다. 로그인해야 보이는 이미지도
-포함될 수 있으니, 파일을 남에게 보내기 전에 한 번 확인해 주세요.
+다만 저장된 파일에는 캡처 당시 화면 내용이 그대로 담깁니다. 로그인해야 보이는 이미지,
+그리고 파일 첫 줄 주석에 원래 주소와 저장 시각이 함께 남습니다. 파일을 남에게 보내기
+전에 한 번 확인해 주세요.
 
 소스 코드: https://github.com/kgh-kang/page-capture-to-html
 ```
@@ -127,22 +128,15 @@ Saves the web page screen the user is looking at as a single HTML file.
 
 ### 권한별 정당성
 
-**`activeTab`**
-```
-사용자가 툴바 버튼이나 단축키로 저장을 요청했을 때, 그 탭 하나에만 접근하기 위해
-필요합니다. 사용자가 요청하지 않은 탭은 읽지 않습니다.
-
-Needed to access the one tab where the user asked for a capture, either by clicking the
-toolbar button or pressing the shortcut. No other tab is ever read.
-```
-
 **`scripting`**
 ```
-저장을 요청한 탭에서 화면 내용을 읽어 HTML 로 옮기는 코드를 실행합니다. 이 코드는
-확장에 함께 포함된 파일이며, 외부에서 내려받지 않습니다.
+사용자가 툴바 버튼을 누르거나 단축키를 눌렀을 때, 그 탭에서 화면 내용을 읽어 HTML 로
+옮기는 코드를 실행합니다. 사용자가 저장을 요청하지 않은 탭에는 코드를 넣지 않습니다.
+이 코드는 확장에 함께 포함된 파일이며, 외부에서 내려받지 않습니다.
 
-Runs the code that reads the visible screen and turns it into HTML, in the tab the user
-asked to capture. That code ships inside the extension and is never fetched remotely.
+Runs the code that reads the visible screen and turns it into HTML, in the tab where the
+user pressed the toolbar button or the shortcut. No code is injected into tabs the user
+did not ask to capture. That code ships inside the extension and is never fetched remotely.
 ```
 
 **`storage`**

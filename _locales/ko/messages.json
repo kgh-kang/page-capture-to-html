@@ -60,9 +60,6 @@
   "saving": {
     "message": "저장하는 중…"
   },
-  "savingHint": {
-    "message": "큰 페이지는 몇 초 걸려요"
-  },
   "noticeTitle": {
     "message": "화면을 가린 안내창이 있어요"
   },
@@ -184,7 +181,12 @@
     }
   },
   "whereSaved": {
-    "message": "다운로드 폴더에 있어요. ⌘⇧J 로 바로 열 수 있어요."
+    "message": "다운로드 폴더에 있어요. $KEY$ 로 바로 열 수 있어요.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "failedTitle": {
     "message": "저장하지 못했어요"
@@ -193,7 +195,12 @@
     "message": "열려 있는 탭을 찾지 못했어요."
   },
   "errNoResponse": {
-    "message": "페이지가 바뀌었어요. 새로고침(⌘R) 뒤 다시 눌러 주세요."
+    "message": "페이지가 바뀌었어요. 새로고침($KEY$) 뒤 다시 눌러 주세요.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "errChromePage": {
     "message": "이 화면은 크롬이 직접 그리는 화면이라 저장할 수 없어요."
@@ -215,5 +222,16 @@
   },
   "shortcutNone": {
     "message": "지정 안 됨"
+  },
+  "saveFull": {
+    "message": "페이지 저장"
+  },
+  "statImagesFailed": {
+    "message": "못 담은 사진 $N$장",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
   }
 }

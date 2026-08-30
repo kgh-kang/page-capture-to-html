@@ -29,16 +29,15 @@
 
 | 권한 | 쓰는 이유 |
 |---|---|
-| `activeTab` | 사용자가 버튼이나 단축키로 저장을 요청한 그 탭에만 접근합니다 |
-| `scripting` | 그 탭에서 화면을 읽어 HTML 로 옮기는 코드를 실행합니다 |
+| `scripting` | 사용자가 저장을 요청한 그 탭에서만, 화면을 읽어 HTML 로 옮기는 코드를 실행합니다 |
 | `storage` | 사용자가 고른 옵션(예: "사진 넣기")을 브라우저에 로컬 저장합니다. 동기화하지 않습니다 |
 | `<all_urls>` | 페이지가 참조하는 이미지·글꼴을 파일에 담기 위해 그 리소스 주소로 요청합니다. 어떤 도메인이 나올지 미리 알 수 없어 넓은 범위가 필요합니다 |
 
 ### 저장한 파일에 대한 주의
 
 저장된 HTML 파일에는 **캡처 당시 화면에 있던 내용이 그대로** 담깁니다.
-로그인해야 보이는 이미지나 개인적인 내용도 포함될 수 있습니다.
-파일을 다른 사람에게 보내기 전에 내용을 확인해 주세요.
+로그인해야 보이는 이미지나 개인적인 내용도 포함될 수 있고, 파일 첫 줄 주석에는
+원래 주소와 저장 시각이 남습니다. 파일을 다른 사람에게 보내기 전에 내용을 확인해 주세요.
 
 ### 문의
 
@@ -70,15 +69,15 @@ that page**; the data goes into the saved file and nowhere else.
 
 | Permission | Why |
 |---|---|
-| `activeTab` | Access is limited to the tab where you asked for a capture |
-| `scripting` | Runs the code that reads the screen and turns it into HTML |
+| `scripting` | Runs the code that reads the screen and turns it into HTML, only in the tab where you asked for a capture |
 | `storage` | Keeps your option choices locally in the browser. Not synced |
 | `<all_urls>` | Fetches the images and fonts the page references so they can be embedded. Those live on domains that cannot be known in advance |
 
 ### A note about saved files
 
 A saved file contains **exactly what was on screen** when you captured it, which may
-include images or content that are only visible while you are signed in.
+include images or content that are only visible while you are signed in. The first line
+of the file also carries a comment with the original address and the time it was saved.
 Please review a file before sharing it with anyone.
 
 ### Contact
