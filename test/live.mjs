@@ -16,7 +16,7 @@ const profile = mkdtempSync(join(tmpdir(), 'vsnap-live-'));
 
 const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
-  '--window-size=1280,800', '--no-first-run', '--no-default-browser-check',
+  `--window-size=${process.env.WIN_W||1280},${process.env.WIN_H||800}`, '--no-first-run', '--no-default-browser-check',
   '--hide-scrollbars', '--disable-web-security', url,
 ], { stdio: 'ignore' });
 
