@@ -186,6 +186,9 @@ node test/probe.mjs <URL> '<JS 식>' [316x598]   # 실제 페이지에서 식 �
 node test/uishot.mjs ko,en              # 팝업 UI 를 언어 × 라이트/다크로 촬영
 ```
 
+**만들어 낸 것은 전부 `out/` 아래로 모인다** — 캡처 결과, 팝업 UI, 스크린샷 템플릿,
+제출용 zip. 저장소에는 안 올라가고(`.gitignore` 한 줄), 지우고 싶으면 폴더째 지우면 된다.
+
 의존성 없이 Node 22+ 내장 WebSocket 으로 Chrome DevTools Protocol 에 직접 붙는다.
 `live.mjs` 는 확장 없이 페이지에 스크립트를 주입하는 방식이라 `--disable-web-security` 로
 교차 출처 fetch 를 흉내 낸다.
@@ -213,10 +216,21 @@ node test/render_text.mjs                    # 글자 마스크 재생성 (폰�
 ### 패키지
 
 ```bash
-./scripts/package.sh          # dist/capture-to-html-<버전>.zip
+./scripts/package.sh          # out/pkg/capture-to-html-<버전>.zip
 ```
 
-확장이 실제로 쓰는 파일만 담는다. `test/`·`scripts/`·`assets/` 는 개발용이라 빠진다.
+확장이 실제로 쓰는 파일만 담는다. `test/`·`scripts/`·`store/`·`assets/` 는 개발용이라 빠지고,
+`fonts/` 도 팝업이 쓰는 라틴 서브셋만 담는다(한글 서브셋은 스크린샷 템플릿용이라 제외).
+매니페스트가 참조하는 파일이 실제로 들어갔는지 zip 을 열어 확인한 뒤 끝난다.
+
+### 스토어 스크린샷
+
+```bash
+node store/shots/build-template.mjs   # out/template.html 을 만든다
+```
+
+크롬에서 열면 1280×800 캔버스 열 장(한국어 5 · 영어 5)이 나오고, 버튼 하나로
+규격에 맞는 PNG 가 떨어진다. 자세한 것은 [store/shots/README.md](store/shots/README.md).
 
 ## 파일 구조
 
@@ -227,8 +241,10 @@ content.js             캡처 엔진 — 가시성 판정, 스타일 diff, 리�
 background.js          service worker — 교차 출처 리소스 대행 fetch
 popup.html / popup.js  팝업 UI
 icons/                 툴바·스토어 아이콘 16·32·48·128px
-fonts/                 Pretendard 라틴 서브셋 29KB (전체는 2,009KB)
+fonts/                 Pretendard 서브셋 — 라틴 30KB(팝업용), 한글 436KB(템플릿용)
 assets/                아이콘 글자 마스크 (생성용, 확장에는 안 들어감)
-scripts/               아이콘 생성기, 패키지 스크립트
+scripts/               아이콘 생성기, 폰트 서브셋, 패키지 스크립트
 test/                  검증 스크립트와 픽스처
+store/                 스토어 등록 문안과 스크린샷 템플릿
+out/                   만들어 낸 것 전부 (저장소에 없음)
 ```

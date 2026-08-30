@@ -1,12 +1,14 @@
 // 팝업 UI 를 실제 크기로, 라이트/다크 두 가지로 찍는다.
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9343;
 const here = new URL('.', import.meta.url).pathname;
+const UI = resolve(here, '..', 'out', 'ui');
+mkdirSync(UI, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-ui-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
   '--window-size=400,900', '--no-first-run', '--hide-scrollbars',
@@ -46,7 +48,7 @@ for (const [scheme, tag] of [['light', 'light'], ['dark', 'dark']]) {
       clip: { x: 0, y: 0, width: w, height: h, scale: 2 },
     });
     const name = `ui-${lang}-${tag}-${state}.png`;
-    writeFileSync(resolve(here, name), Buffer.from(r.result.data, 'base64'));
+    writeFileSync(resolve(UI, name), Buffer.from(r.result.data, 'base64'));
     console.log(`${name}  ${w}x${h}`);
   }
 }

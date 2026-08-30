@@ -1,19 +1,6 @@
-# 웹스토어 제출용 패키지
-dist/
-
-# 테스트가 만들어내는 것들 — 캡처 결과와 스크린샷
-test/*.png
-test/*-out.html
-test/out.html
-test/out-frozen.html
-test/out-whole.html
-test/fonts/
-test/icon-drafts/
+# 만들어 낸 것은 전부 여기로 모인다 — 캡처 결과, 팝업 UI, 스크린샷 템플릿 완성본,
+# 제출용 zip. 지우고 싶으면 이 폴더만 통째로 지우면 되고, 다시 만들려면
+# test/*.mjs 나 store/shots/build-template.mjs 를 돌리면 된다.
+out/
 
 .DS_Store
-
-# 검수용 임시 근거 자료 (재생성 가능)
-test/evidence/
-
-# 스크린샷 템플릿 완성본 — template.src.html 에서 만들어 낸다(1.2MB)
-store/shots/template.html

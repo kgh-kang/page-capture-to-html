@@ -1,7 +1,7 @@
 // 실제 사이트에서 캡처해 보고, 원본/결과 스크린샷을 나란히 남긴다.
 // 확장 없이 돌리므로 리소스 fetch 는 페이지 컨텍스트의 fetch 로 대신한다(교차 출처 일부는 실패).
 import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -12,6 +12,8 @@ const url = process.argv[2];
 const tagName = process.argv[3] || 'live';
 const scrollY = Number(process.argv[4] || 0);
 const contentJs = readFileSync(resolve(here, '..', 'content.js'), 'utf8');
+const OUT = resolve(here, '..', 'out', 'test');
+mkdirSync(OUT, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-live-'));
 
 const chrome = spawn(CHROME, [
@@ -58,7 +60,7 @@ if (SCALE !== 1) {
   await sleep(500);
 }
 const before = await send('Page.captureScreenshot', { format: 'png' });
-writeFileSync(resolve(here, `${tagName}-original.png`), Buffer.from(before.result.data, 'base64'));
+writeFileSync(resolve(OUT, `${tagName}-original.png`), Buffer.from(before.result.data, 'base64'));
 
 await evaluate(`
   window.__blobText = null;
@@ -92,12 +94,12 @@ const result = await evaluate(`new Promise(res => window.__listener({type:'VSNAP
 console.log(tagName, JSON.stringify(result));
 await evaluate('window.__blobPromise');
 const html = await evaluate('window.__blobText');
-const outFile = resolve(here, `${tagName}-out.html`);
+const outFile = resolve(OUT, `${tagName}-out.html`);
 writeFileSync(outFile, html || '');
 console.log('  wall', Date.now() - t0, 'ms ·', (html.length / 1024 / 1024).toFixed(2), 'MB');
 
 await send('Page.navigate', { url: 'file://' + outFile });
 await sleep(2500);
 const after = await send('Page.captureScreenshot', { format: 'png' });
-writeFileSync(resolve(here, `${tagName}-capture.png`), Buffer.from(after.result.data, 'base64'));
+writeFileSync(resolve(OUT, `${tagName}-capture.png`), Buffer.from(after.result.data, 'base64'));
 ws.close(); chrome.kill(); process.exit(0);

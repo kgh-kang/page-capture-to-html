@@ -1,12 +1,14 @@
 // 원본 페이지와 캡처 결과를 같은 크기로 스크린샷해서 나란히 비교한다.
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9334;
 const here = new URL('.', import.meta.url).pathname;
+const OUT = resolve(here, '..', 'out', 'test');
+mkdirSync(OUT, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-shot-'));
 const targets = process.argv.slice(2);
 
@@ -43,7 +45,7 @@ for (const spec of targets) {
   if (scroll) await send('Runtime.evaluate', { expression: `window.scrollTo(0, ${scroll})` });
   await sleep(400);
   const r = await send('Page.captureScreenshot', { format: 'png' });
-  writeFileSync(resolve(here, out), Buffer.from(r.result.data, 'base64'));
+  writeFileSync(resolve(here, '..', 'out', 'test', out), Buffer.from(r.result.data, 'base64'));
   console.log('wrote', out);
 }
 ws.close(); chrome.kill(); process.exit(0);

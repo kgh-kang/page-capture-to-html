@@ -5,13 +5,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 version=$(python3 -c "import json;print(json.load(open('manifest.json'))['version'])")
-out="dist/capture-to-html-${version}.zip"
+out="out/pkg/capture-to-html-${version}.zip"
 
-mkdir -p dist
+mkdir -p out/pkg
 rm -f "$out"
 zip -qr "$out" \
   manifest.json background.js content.js popup.html popup.js \
-  icons fonts _locales \
+  icons _locales fonts/pretendard-latin.woff2 \
   -x '*.DS_Store'
 
 # 매니페스트가 참조하는 파일이 실제로 담겼는지 확인한다

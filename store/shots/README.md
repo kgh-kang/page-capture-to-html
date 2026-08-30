@@ -6,11 +6,11 @@
 node store/shots/build-template.mjs
 ```
 
-`template.src.html`(27KB) 에 글꼴·팝업 UI·창 안 화면을 심어 `template.html` 을 뽑는다.
+`template.src.html`(27KB) 에 글꼴·팝업 UI·창 안 화면을 심어 `out/template.html` 을 뽑는다.
 없는 소재는 알아서 만들어 온다 — 팝업은 `popup.html` 을 렌더해서, 창 안 화면은
 `embed-shots.mjs` 로 받아서. 소재가 이미 있으면 그대로 쓴다.
 
-만들어진 `template.html` 을 크롬에서 열면 1280×800 캔버스 열 장이 나온다.
+만들어진 `out/template.html` 을 크롬에서 열면 1280×800 캔버스 열 장이 나온다.
 **01–05 는 한국어, E1–E5 는 같은 내용의 영어판**이다. 스토어는 언어별로 스크린샷을
 따로 올릴 수 있으니 필요한 것만 골라 저장하면 된다.
 

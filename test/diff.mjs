@@ -44,7 +44,7 @@ await send('Page.enable');
 await send('Page.navigate', { url });
 await sleep(4500);
 const a = await evaluate(PROBE);
-await send('Page.navigate', { url: 'file://' + resolve(here, `${tag}-out.html`) });
+await send('Page.navigate', { url: 'file://' + resolve(here, '..', 'out', 'test', `${tag}-out.html`) });
 await sleep(2500);
 const b = await evaluate(PROBE);
 

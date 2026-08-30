@@ -9,9 +9,9 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9347;
 const here = new URL('.', import.meta.url).pathname;
 // 원본 폰트(791KB)는 저장소에 넣지 않는다. 없으면 받아온다.
-const fontPath = resolve(here, 'fonts/Pretendard-Bold.woff2');
+const fontPath = resolve(here, '..', 'out', 'masks', 'Pretendard-Bold.woff2');
 if (!existsSync(fontPath)) {
-  mkdirSync(resolve(here, 'fonts'), { recursive: true });
+  mkdirSync(resolve(here, '..', 'out', 'masks'), { recursive: true });
   const url = 'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2';
   process.stdout.write('Pretendard Bold 내려받는 중… ');
   const buf = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -69,7 +69,7 @@ for (const job of JOBS) {
     clip: { x: box.x, y: box.y, width: Math.ceil(box.w), height: Math.ceil(box.h), scale: 1 },
     captureBeyondViewport: true,
   });
-  writeFileSync(resolve(here, 'assets-' + job.out), Buffer.from(r.result.data, 'base64'));
+  writeFileSync(resolve(here, '..', 'out', 'masks', job.out), Buffer.from(r.result.data, 'base64'));
   console.log(job.out, Math.round(box.w) + 'x' + Math.round(box.h));
 }
 ws.close(); chrome.kill(); process.exit(0);

@@ -1,6 +1,6 @@
 // 의존성 없는 CDP 스모크 테스트. Node 22+ 내장 WebSocket 사용.
 import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -9,6 +9,8 @@ const PORT = 9333;
 const here = new URL('.', import.meta.url).pathname;
 const pageUrl = 'file://' + resolve(here, 'page.html');
 const contentJs = readFileSync(resolve(here, '..', 'content.js'), 'utf8');
+const OUT = resolve(here, '..', 'out', 'test');
+mkdirSync(OUT, { recursive: true });
 const profile = mkdtempSync(join(tmpdir(), 'vsnap-'));
 
 const chrome = spawn(CHROME, [
@@ -83,7 +85,7 @@ console.log('capture result:', JSON.stringify(result, null, 2));
 
 await evaluate('window.__blobPromise');
 const html = await evaluate('window.__blobText');
-writeFileSync(resolve(here, 'out.html'), html || '');
+writeFileSync(resolve(OUT, 'out.html'), html || '');
 
 // '페이지 전체' 로도 한 번 캡처해 화면 밖 내용이 담기는지 본다
 await evaluate('window.__blobText = null; window.__blobPromise = null;', false);
@@ -93,7 +95,7 @@ await evaluate(`
 `);
 await evaluate('window.__blobPromise');
 const whole = await evaluate('window.__blobText');
-writeFileSync(resolve(here, 'out-whole.html'), whole || '');
+writeFileSync(resolve(OUT, 'out-whole.html'), whole || '');
 
 // 같은 페이지를 '읽기 전용으로 굳히기' 로 한 번 더 캡처해 비교한다
 await evaluate('window.__blobText = null; window.__blobPromise = null;', false);
@@ -103,7 +105,7 @@ await evaluate(`
 `);
 await evaluate('window.__blobPromise');
 const frozen = await evaluate('window.__blobText');
-writeFileSync(resolve(here, 'out-frozen.html'), frozen || '');
+writeFileSync(resolve(OUT, 'out-frozen.html'), frozen || '');
 
 // ---- 검증 ----
 const checks = [
